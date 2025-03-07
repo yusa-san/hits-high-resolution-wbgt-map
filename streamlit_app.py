@@ -57,17 +57,16 @@ def file_selection_screen():
 
     # 2. URLからの入力
     st.subheader("【2】URLからファイル入力")
-    url_input = st.text_area("URLを入力してください（1行につき1つ）", key="url_input")
-    if url_input:
-        urls = [line.strip() for line in url_input.splitlines() if line.strip()]
-        for url in urls:
-            file_name = url.split("/")[-1]
-            file_info = {"source": "url", "name": file_name, "url": url}
+    url_input = st.text_input("URLを入力してください", key="url_input")
+    if st.button("読み込み", key="load_url"):
+        if url_input:
+            file_name = url_input.split("/")[-1]
+            file_info = {"source": "url", "name": file_name, "url": url_input}
             ext = os.path.splitext(file_name)[1].lower()
             if ext == ".csv":
                 try:
                     with st.spinner(f"{file_name} を読み込み中..."):
-                        response = requests.get(url)
+                        response = requests.get(url_input)
                         response.raise_for_status()
                         from io import StringIO
                         df = pd.read_csv(StringIO(response.text))
@@ -81,7 +80,7 @@ def file_selection_screen():
             elif ext == ".geojson":
                 try:
                     with st.spinner(f"{file_name} を読み込み中..."):
-                        response = requests.get(url)
+                        response = requests.get(url_input)
                         response.raise_for_status()
                         from io import StringIO
                         gdf = gpd.read_file(StringIO(response.text))
@@ -95,7 +94,7 @@ def file_selection_screen():
             elif ext in [".tiff", ".tif"]:
                 try:
                     with st.spinner(f"{file_name} を読み込み中..."):
-                        response = requests.get(url)
+                        response = requests.get(url_input)
                         response.raise_for_status()
                         from rasterio.io import MemoryFile
                         with MemoryFile(response.content) as memfile:
