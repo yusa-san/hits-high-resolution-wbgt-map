@@ -108,8 +108,13 @@ def file_selection_screen():
                     st.session_state.url_file_preview[url_input] = df # 読み込んだCSVデータをキャッシュに保存
                 except Exception as e:
                     st.error(f"CSV URL プレビュー読み込みエラー ({file_name}): {e}")
-                file_info['lat_col'] = st.text_input(f"{file_name} の緯度カラム", value="", key=f"lat_url_{file_name}")
-                file_info['lon_col'] = st.text_input(f"{file_name} の経度カラム", value="", key=f"lon_url_{file_name}")
+
+                # 既にセッション状態に値があれば、それを初期値として使用（なければデフォルト値 "lat" / "lon" を使用）
+                lat_default = st.session_state.get(f"lat_column_{file_name}", "lat")
+                lon_default = st.session_state.get(f"lon_column_{file_name}", "lon")
+                file_info['lat_col'] = st.text_input(f"{file_name} の緯度カラム", value=lat_default, key=f"lat_column_{file_name}")
+                file_info['lon_col'] = st.text_input(f"{file_name} の経度カラム", value=lon_default, key=f"lon_column_{file_name}")
+
             # GeoJSONの場合
             elif ext == ".geojson":
                 try:
