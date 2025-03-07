@@ -31,8 +31,8 @@ def file_selection_screen():
                     st.dataframe(df.head())
                 except Exception as e:
                     st.error(f"CSVプレビュー読み込みエラー ({f}): {e}")
-                file_info['lat_col'] = st.text_input(f"{f} の緯度カラム", value="lat", key=f"lat_folder_{f}")
-                file_info['lon_col'] = st.text_input(f"{f} の経度カラム", value="lon", key=f"lon_folder_{f}")
+                file_info['lat_col'] = st.text_input(f"{f} の緯度カラム", value="", key=f"lat_folder_{f}")
+                file_info['lon_col'] = st.text_input(f"{f} の経度カラム", value="", key=f"lon_folder_{f}")
             elif ext == ".geojson":
                 try:
                     gdf = gpd.read_file(file_info["path"])
@@ -40,8 +40,6 @@ def file_selection_screen():
                     st.dataframe(gdf.head())
                 except Exception as e:
                     st.error(f"GeoJSONプレビュー読み込みエラー ({f}): {e}")
-                file_info['lat_col'] = st.text_input(f"{f} の緯度カラム", value="lat", key=f"lat_folder_{f}")
-                file_info['lon_col'] = st.text_input(f"{f} の経度カラム", value="lon", key=f"lon_folder_{f}")
             elif ext in [".tiff", ".tif"]:
                 try:
                     with rasterio.open(file_info["path"]) as src:
@@ -51,7 +49,7 @@ def file_selection_screen():
                 except Exception as e:
                     st.error(f"TIFFメタデータ読み込みエラー ({f}): {e}")
                 file_info['band'] = st.text_input(f"{f} の色分け用バンド", value="1", key=f"band_folder_{f}")
-            selected_files.append(file_info)
+            st.session_state.url_file_info.append(file_info)
     else:
         st.info("Inputフォルダが存在しません。")
 
@@ -108,10 +106,10 @@ def file_selection_screen():
                     st.write(f"**{file_name} プレビュー:**")
                     st.dataframe(df.head())
                     st.session_state.url_file_preview[url_input] = df # 読み込んだCSVデータをキャッシュに保存
-                    file_info['lat_col'] = st.text_input(f"{file_name} の緯度カラム", value="lat", key=f"lat_url_{file_name}")
-                    file_info['lon_col'] = st.text_input(f"{file_name} の経度カラム", value="lon", key=f"lon_url_{file_name}")
                 except Exception as e:
                     st.error(f"CSV URL プレビュー読み込みエラー ({file_name}): {e}")
+                file_info['lat_col'] = st.text_input(f"{file_name} の緯度カラム", value="", key=f"lat_url_{file_name}")
+                file_info['lon_col'] = st.text_input(f"{file_name} の経度カラム", value="", key=f"lon_url_{file_name}")
             # GeoJSONの場合
             elif ext == ".geojson":
                 try:
@@ -216,8 +214,8 @@ def file_selection_screen():
                     st.dataframe(df.head())
                 except Exception as e:
                     st.error(f"アップロードCSVプレビュー読み込みエラー ({file_name}): {e}")
-                file_info['lat_col'] = st.text_input(f"{file_name} の緯度カラム", value="lat", key=f"lat_upload_{file_name}")
-                file_info['lon_col'] = st.text_input(f"{file_name} の経度カラム", value="lon", key=f"lon_upload_{file_name}")
+                file_info['lat_col'] = st.text_input(f"{file_name} の緯度カラム", value="", key=f"lat_upload_{file_name}")
+                file_info['lon_col'] = st.text_input(f"{file_name} の経度カラム", value="", key=f"lon_upload_{file_name}")
             elif ext == ".geojson":
                 try:
                     uploaded_file.seek(0)
@@ -226,8 +224,6 @@ def file_selection_screen():
                     st.dataframe(gdf.head())
                 except Exception as e:
                     st.error(f"アップロードGeoJSONプレビュー読み込みエラー ({file_name}): {e}")
-                file_info['lat_col'] = st.text_input(f"{file_name} の緯度カラム", value="lat", key=f"lat_upload_{file_name}")
-                file_info['lon_col'] = st.text_input(f"{file_name} の経度カラム", value="lon", key=f"lon_upload_{file_name}")
             elif ext in [".tiff", ".tif"]:
                 try:
                     uploaded_file.seek(0)
@@ -238,17 +234,15 @@ def file_selection_screen():
                 except Exception as e:
                     st.error(f"アップロードTIFFメタデータ読み込みエラー ({file_name}): {e}")
                 file_info['band'] = st.text_input(f"{file_name} の色分け用バンド", value="1", key=f"band_upload_{file_name}")
-            selected_files.append(file_info)
+            st.session_state.url_file_info.append(file_info)
 
-    st.write("### 選択されたファイル一覧:")
-    if selected_files:
-        for file_info in selected_files:
+    # 選択されたファイルの一覧
+    if "url_file_info" in st.session_state and st.session_state.url_file_info:
+        st.write("### 選択されたファイル一覧:")
+        for file_info in st.session_state.url_file_info:
             st.write(f"{file_info['name']} ({file_info['source']})")
     else:
         st.write("ファイルが選択されていません。")
-    
-    # 選択結果をセッションステートに保存
-    st.session_state["selected_files"] = selected_files
 
 def display_dashboard(selected_files):
     st.header("ダッシュボード表示画面")
