@@ -98,10 +98,10 @@ def file_selection_screen():
                     st.success(f"{file_name} の読み込みが完了しました。")
                     st.write(f"**{file_name} プレビュー:**")
                     st.dataframe(df.head())
+                    file_info['lat_col'] = st.text_input(f"{file_name} の緯度カラム", value="lat", key=f"lat_url_{file_name}")
+                    file_info['lon_col'] = st.text_input(f"{file_name} の経度カラム", value="lon", key=f"lon_url_{file_name}")
                 except Exception as e:
                     st.error(f"CSV URL プレビュー読み込みエラー ({file_name}): {e}")
-                file_info['lat_col'] = st.text_input(f"{file_name} の緯度カラム", value="lat", key=f"lat_url_{file_name}")
-                file_info['lon_col'] = st.text_input(f"{file_name} の経度カラム", value="lon", key=f"lon_url_{file_name}")
             # GeoJSONの場合
             elif ext == ".geojson":
                 try:
@@ -135,10 +135,10 @@ def file_selection_screen():
                     st.success(f"{file_name} の読み込みが完了しました。")
                     st.write(f"**{file_name} プレビュー:**")
                     st.dataframe(gdf.head())
+                    file_info['lat_col'] = st.text_input(f"{file_name} の緯度カラム", value="lat", key=f"lat_url_{file_name}")
+                    file_info['lon_col'] = st.text_input(f"{file_name} の経度カラム", value="lon", key=f"lon_url_{file_name}")
                 except Exception as e:
                     st.error(f"GeoJSON URL プレビュー読み込みエラー ({file_name}): {e}")
-                file_info['lat_col'] = st.text_input(f"{file_name} の緯度カラム", value="lat", key=f"lat_url_{file_name}")
-                file_info['lon_col'] = st.text_input(f"{file_name} の経度カラム", value="lon", key=f"lon_url_{file_name}")
             # TIFFの場合
             elif ext in [".tiff", ".tif"]:
                 try:
@@ -173,9 +173,9 @@ def file_selection_screen():
                     st.success(f"{file_name} の読み込みが完了しました。")
                     st.write(f"**{file_name} メタデータ:**")
                     st.json(meta)
+                    file_info['band'] = st.text_input(f"{file_name} の色分け用バンド", value="1", key=f"band_url_{file_name}")
                 except Exception as e:
                     st.error(f"TIFF URL メタデータ読み込みエラー ({file_name}): {e}")
-                file_info['band'] = st.text_input(f"{file_name} の色分け用バンド", value="1", key=f"band_url_{file_name}")
             selected_files.append(file_info)
 
     # 3. ファイルアップローダーからの入力
