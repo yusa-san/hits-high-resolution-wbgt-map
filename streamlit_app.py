@@ -10,7 +10,7 @@ from streamlit_folium import folium_static
 st.title("インタラクティブデータ表示ダッシュボード")
 
 # 指定のinputフォルダー内のファイル一覧を取得
-INPUT_FOLDER = "input"
+INPUT_FOLDER = "./input"
 all_files = os.listdir(INPUT_FOLDER)
 
 # サポートする拡張子をフィルタ
