@@ -31,8 +31,11 @@ def file_selection_screen():
                     st.dataframe(df.head())
                 except Exception as e:
                     st.error(f"CSVプレビュー読み込みエラー ({f}): {e}")
-                file_info['lat_col'] = st.text_input(f"{f} の緯度カラム", value="", key=f"lat_folder_{f}")
-                file_info['lon_col'] = st.text_input(f"{f} の経度カラム", value="", key=f"lon_folder_{f}")
+                # 既にセッション状態に値があれば、それを初期値として使用（なければデフォルト値 "lat" / "lon" を使用）
+                lat_default = st.session_state.get(f"lat_column_{file_name}", "lat")
+                lon_default = st.session_state.get(f"lon_column_{file_name}", "lon")
+                file_info['lat_col'] = st.text_input(f"{file_name} の緯度カラム", value=lat_default, key=f"lat_column_{file_name}")
+                file_info['lon_col'] = st.text_input(f"{file_name} の経度カラム", value=lon_default, key=f"lon_column_{file_name}")
             elif ext == ".geojson":
                 try:
                     gdf = gpd.read_file(file_info["path"])
@@ -106,15 +109,15 @@ def file_selection_screen():
                     st.write(f"**{file_name} プレビュー:**")
                     st.dataframe(df.head())
                     st.session_state.url_file_preview[url_input] = df # 読み込んだCSVデータをキャッシュに保存
+
+                    # 既にセッション状態に値があれば、それを初期値として使用（なければデフォルト値 "lat" / "lon" を使用）
+                    lat_default = st.session_state.get(f"lat_column_{file_name}", "lat")
+                    lon_default = st.session_state.get(f"lon_column_{file_name}", "lon")
+                    file_info['lat_col'] = st.text_input(f"{file_name} の緯度カラム", value=lat_default, key=f"lat_column_{file_name}")
+                    file_info['lon_col'] = st.text_input(f"{file_name} の経度カラム", value=lon_default, key=f"lon_column_{file_name}")
+
                 except Exception as e:
                     st.error(f"CSV URL プレビュー読み込みエラー ({file_name}): {e}")
-
-                # 既にセッション状態に値があれば、それを初期値として使用（なければデフォルト値 "lat" / "lon" を使用）
-                lat_default = st.session_state.get(f"lat_column_{file_name}", "lat")
-                lon_default = st.session_state.get(f"lon_column_{file_name}", "lon")
-                file_info['lat_col'] = st.text_input(f"{file_name} の緯度カラム", value=lat_default, key=f"lat_column_{file_name}")
-                file_info['lon_col'] = st.text_input(f"{file_name} の経度カラム", value=lon_default, key=f"lon_column_{file_name}")
-
             # GeoJSONの場合
             elif ext == ".geojson":
                 try:
@@ -217,10 +220,13 @@ def file_selection_screen():
                     df = pd.read_csv(uploaded_file)
                     st.write(f"**{file_name} プレビュー:**")
                     st.dataframe(df.head())
+                    # 既にセッション状態に値があれば、それを初期値として使用（なければデフォルト値 "lat" / "lon" を使用）
+                    lat_default = st.session_state.get(f"lat_column_{file_name}", "lat")
+                    lon_default = st.session_state.get(f"lon_column_{file_name}", "lon")
+                    file_info['lat_col'] = st.text_input(f"{file_name} の緯度カラム", value=lat_default, key=f"lat_column_{file_name}")
+                    file_info['lon_col'] = st.text_input(f"{file_name} の経度カラム", value=lon_default, key=f"lon_column_{file_name}")
                 except Exception as e:
                     st.error(f"アップロードCSVプレビュー読み込みエラー ({file_name}): {e}")
-                file_info['lat_col'] = st.text_input(f"{file_name} の緯度カラム", value="", key=f"lat_upload_{file_name}")
-                file_info['lon_col'] = st.text_input(f"{file_name} の経度カラム", value="", key=f"lon_upload_{file_name}")
             elif ext == ".geojson":
                 try:
                     uploaded_file.seek(0)
