@@ -66,10 +66,12 @@ def file_selection_screen():
             ext = os.path.splitext(file_name)[1].lower()
             if ext == ".csv":
                 try:
-                    response = requests.get(url)
-                    response.raise_for_status()
-                    from io import StringIO
-                    df = pd.read_csv(StringIO(response.text))
+                    with st.spinner(f"{file_name} を読み込み中..."):
+                        response = requests.get(url)
+                        response.raise_for_status()
+                        from io import StringIO
+                        df = pd.read_csv(StringIO(response.text))
+                    st.success(f"{file_name} の読み込みが完了しました。")
                     st.write(f"**{file_name} プレビュー:**")
                     st.dataframe(df.head())
                 except Exception as e:
@@ -78,10 +80,12 @@ def file_selection_screen():
                 file_info['lon_col'] = st.text_input(f"{file_name} の経度カラム", value="lon", key=f"lon_url_{file_name}")
             elif ext == ".geojson":
                 try:
-                    response = requests.get(url)
-                    response.raise_for_status()
-                    from io import StringIO
-                    gdf = gpd.read_file(StringIO(response.text))
+                    with st.spinner(f"{file_name} を読み込み中..."):
+                        response = requests.get(url)
+                        response.raise_for_status()
+                        from io import StringIO
+                        gdf = gpd.read_file(StringIO(response.text))
+                    st.success(f"{file_name} の読み込みが完了しました。")
                     st.write(f"**{file_name} プレビュー:**")
                     st.dataframe(gdf.head())
                 except Exception as e:
@@ -90,12 +94,14 @@ def file_selection_screen():
                 file_info['lon_col'] = st.text_input(f"{file_name} の経度カラム", value="lon", key=f"lon_url_{file_name}")
             elif ext in [".tiff", ".tif"]:
                 try:
-                    response = requests.get(url)
-                    response.raise_for_status()
-                    from rasterio.io import MemoryFile
-                    with MemoryFile(response.content) as memfile:
-                        with memfile.open() as src:
-                            meta = src.meta
+                    with st.spinner(f"{file_name} を読み込み中..."):
+                        response = requests.get(url)
+                        response.raise_for_status()
+                        from rasterio.io import MemoryFile
+                        with MemoryFile(response.content) as memfile:
+                            with memfile.open() as src:
+                                meta = src.meta
+                    st.success(f"{file_name} の読み込みが完了しました。")
                     st.write(f"**{file_name} メタデータ:**")
                     st.json(meta)
                 except Exception as e:
