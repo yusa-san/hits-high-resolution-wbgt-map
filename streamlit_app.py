@@ -190,6 +190,7 @@ def file_selection_screen():
     # 既に読み込み済みなら再表示
     if url_input and url_input in st.session_state.url_file_preview:
         preview = st.session_state.url_file_preview[url_input]
+        file_name = url_input.split("/")[-1]
         st.write(f"**{file_name} の再プレビュー:**")
         if isinstance(preview, pd.DataFrame):
             st.dataframe(preview.head())
