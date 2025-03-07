@@ -67,7 +67,7 @@ def file_selection_screen():
     if "loaded_url" not in st.session_state:
         st.session_state["loaded_url"] = ""
     url_input = st.text_input("URLを入力してください", key="url_input", value=st.session_state["loaded_url"])
-    if st.button("読み込み", key="load_url"):
+    if st.button("読み込み", key="load_url"): # 読み込みボタンを押したときだけ実行し、DataFrameをセッションステートに格納
         st.session_state["loaded_url"] = url_input
         # st.success(f"読み込みボタンが押されました") # debug
         if url_input:
@@ -108,14 +108,8 @@ def file_selection_screen():
                     st.success(f"{file_name} の読み込みが完了しました。")
                     st.write(f"**{file_name} プレビュー:**")
                     st.dataframe(df.head())
+                    st.session_state["url_loaded"] = True
                     st.session_state.url_file_preview[url_input] = df # 読み込んだCSVデータをキャッシュに保存
-
-                    # 既にセッション状態に値があれば、それを初期値として使用（なければデフォルト値 "lat" / "lon" を使用）
-                    lat_default = st.session_state.get(f"lat_column_{file_name}", "lat")
-                    lon_default = st.session_state.get(f"lon_column_{file_name}", "lon")
-                    file_info['lat_col'] = st.text_input(f"{file_name} の緯度カラム", value=lat_default, key=f"lat_column_{file_name}")
-                    file_info['lon_col'] = st.text_input(f"{file_name} の経度カラム", value=lon_default, key=f"lon_column_{file_name}")
-
                 except Exception as e:
                     st.error(f"CSV URL プレビュー読み込みエラー ({file_name}): {e}")
             # GeoJSONの場合
@@ -151,6 +145,7 @@ def file_selection_screen():
                     st.success(f"{file_name} の読み込みが完了しました。")
                     st.write(f"**{file_name} プレビュー:**")
                     st.dataframe(gdf.head())
+                    st.session_state["url_loaded"] = True
                     st.session_state.url_file_preview[url_input] = gdf # 読み込んだgeojsonデータをキャッシュに保存
                 except Exception as e:
                     st.error(f"GeoJSON URL プレビュー読み込みエラー ({file_name}): {e}")
@@ -188,10 +183,21 @@ def file_selection_screen():
                     st.success(f"{file_name} の読み込みが完了しました。")
                     st.write(f"**{file_name} メタデータ:**")
                     st.json(meta)
+                    st.session_state["url_loaded"] = True
                     st.session_state.url_file_preview[url_input] = meta # 読み込んだメタデータをキャッシュに保存
-                    file_info['band'] = st.text_input(f"{file_name} の色分け用バンド", value="1", key=f"band_url_{file_name}")
                 except Exception as e:
                     st.error(f"TIFF URL メタデータ読み込みエラー ({file_name}): {e}")
+
+            # url_loaded が True の場合のみ、常に緯度/経度の入力欄を表示する
+            if st.session_state.get("url_loaded", False):
+                if ext == ".csv":
+                    # 既にセッション状態にある値を初期値として使用
+                    lat_default = st.session_state.get(f"lat_column_{file_name}", "lat")
+                    lon_default = st.session_state.get(f"lon_column_{file_name}", "lon")
+                    file_info['lat_col'] = st.text_input(f"{file_name} の緯度カラム", value=lat_default, key=f"lat_column_{file_name}")
+                    file_info['lon_col'] = st.text_input(f"{file_name} の経度カラム", value=lon_default, key=f"lon_column_{file_name}")
+                elif ext in [".tiff", ".tif"]:
+                    file_info['band'] = st.text_input(f"{file_name} の色分け用バンド", value="1", key=f"band_url_{file_name}")
             st.session_state.url_file_info.append(file_info)
 
     # 既に読み込み済みなら再表示
