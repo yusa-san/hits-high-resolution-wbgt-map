@@ -55,124 +55,122 @@ def file_selection_screen():
     else:
         st.info("Inputフォルダが存在しません。")
 
-# 2. URLからの入力
-st.subheader("【2】URLからファイル入力")
-if "url_file_info" not in st.session_state:
-    st.session_state.url_file_info = []
-
-url_input = st.text_input("URLを入力してください", key="url_input")
-if st.button("読み込み", key="load_url"):
-    if url_input:
-        file_name = url_input.split("/")[-1]
-        file_info = {"source": "url", "name": file_name, "url": url_input}
-        ext = os.path.splitext(file_name)[1].lower()
-        # CSVの場合
-        if ext == ".csv":
-            try:
-                with st.spinner(f"{file_name} を読み込み中..."):
-                    response = requests.get(url_input, stream=True)
-                    if response.status_code == 200:
-                        st.success(f"{file_name} へのアクセス成功（Status: {response.status_code}）")
-                    else:
-                        st.error(f"{file_name} へのアクセス拒否（Status: {response.status_code}）")
-                    response.raise_for_status()
-                    total_size = int(response.headers.get('content-length', 0))
-                    data_chunks = []
-                    bytes_downloaded = 0
-                    if total_size == 0:
-                        st.warning("ファイルサイズが不明なため、進捗表示はスキップします。")
-                        data_chunks.append(response.content)
-                    else:
-                        progress_bar = st.progress(0)
-                        chunk_size = 1024
-                        for chunk in response.iter_content(chunk_size=chunk_size):
-                            if chunk:
-                                data_chunks.append(chunk)
-                                bytes_downloaded += len(chunk)
-                                progress = int(min(bytes_downloaded / total_size, 1.0) * 100)
-                                progress_bar.progress(progress)
-                    csv_data = b"".join(data_chunks).decode("utf-8")
-                    from io import StringIO
-                    df = pd.read_csv(StringIO(csv_data))
-                st.success(f"{file_name} の読み込みが完了しました。")
-                st.write(f"**{file_name} プレビュー:**")
-                st.dataframe(df.head())
-            except Exception as e:
-                st.error(f"CSV URL プレビュー読み込みエラー ({file_name}): {e}")
-            file_info['lat_col'] = st.text_input(f"{file_name} の緯度カラム", value="lat", key=f"lat_url_{file_name}")
-            file_info['lon_col'] = st.text_input(f"{file_name} の経度カラム", value="lon", key=f"lon_url_{file_name}")
-        # GeoJSONの場合
-        elif ext == ".geojson":
-            try:
-                with st.spinner(f"{file_name} を読み込み中..."):
-                    response = requests.get(url_input, stream=True)
-                    if response.status_code == 200:
-                        st.success(f"{file_name} へのアクセス成功（Status: {response.status_code}）")
-                    else:
-                        st.error(f"{file_name} へのアクセス拒否（Status: {response.status_code}）")
-                    response.raise_for_status()
-                    total_size = int(response.headers.get('content-length', 0))
-                    data_chunks = []
-                    bytes_downloaded = 0
-                    if total_size == 0:
-                        st.warning("ファイルサイズが不明なため、進捗表示はスキップします。")
-                        data_chunks.append(response.content)
-                    else:
-                        progress_bar = st.progress(0)
-                        chunk_size = 1024
-                        for chunk in response.iter_content(chunk_size=chunk_size):
-                            if chunk:
-                                data_chunks.append(chunk)
-                                bytes_downloaded += len(chunk)
-                                progress = int(min(bytes_downloaded / total_size, 1.0) * 100)
-                                progress_bar.progress(progress)
-                    geojson_data = b"".join(data_chunks).decode("utf-8")
-                    from io import StringIO
-                    gdf = gpd.read_file(StringIO(geojson_data))
-                st.success(f"{file_name} の読み込みが完了しました。")
-                st.write(f"**{file_name} プレビュー:**")
-                st.dataframe(gdf.head())
-            except Exception as e:
-                st.error(f"GeoJSON URL プレビュー読み込みエラー ({file_name}): {e}")
-            file_info['lat_col'] = st.text_input(f"{file_name} の緯度カラム", value="lat", key=f"lat_url_{file_name}")
-            file_info['lon_col'] = st.text_input(f"{file_name} の経度カラム", value="lon", key=f"lon_url_{file_name}")
-        # TIFFの場合
-        elif ext in [".tiff", ".tif"]:
-            try:
-                with st.spinner(f"{file_name} を読み込み中..."):
-                    response = requests.get(url_input, stream=True)
-                    if response.status_code == 200:
-                        st.success(f"{file_name} へのアクセス成功（Status: {response.status_code}）")
-                    else:
-                        st.error(f"{file_name} へのアクセス拒否（Status: {response.status_code}）")
-                    response.raise_for_status()
-                    total_size = int(response.headers.get('content-length', 0))
-                    data_chunks = []
-                    bytes_downloaded = 0
-                    if total_size == 0:
-                        st.warning("ファイルサイズが不明なため、進捗表示はスキップします。")
-                        data_chunks.append(response.content)
-                    else:
-                        progress_bar = st.progress(0)
-                        chunk_size = 1024
-                        for chunk in response.iter_content(chunk_size=chunk_size):
-                            if chunk:
-                                data_chunks.append(chunk)
-                                bytes_downloaded += len(chunk)
-                                progress = int(min(bytes_downloaded / total_size, 1.0) * 100)
-                                progress_bar.progress(progress)
-                    tiff_data = b"".join(data_chunks)
-                    from rasterio.io import MemoryFile
-                    with MemoryFile(tiff_data) as memfile:
-                        with memfile.open() as src:
-                            meta = src.meta
-                st.success(f"{file_name} の読み込みが完了しました。")
-                st.write(f"**{file_name} メタデータ:**")
-                st.json(meta)
-            except Exception as e:
-                st.error(f"TIFF URL メタデータ読み込みエラー ({file_name}): {e}")
-            file_info['band'] = st.text_input(f"{file_name} の色分け用バンド", value="1", key=f"band_url_{file_name}")
-        st.session_state.url_file_info.append(file_info)
+    # 2. URLからの入力
+    st.subheader("【2】URLからファイル入力")
+    url_input = st.text_input("URLを入力してください", key="url_input")
+    if st.button("読み込み", key="load_url"):
+        if url_input:
+            file_name = url_input.split("/")[-1]
+            file_info = {"source": "url", "name": file_name, "url": url_input}
+            ext = os.path.splitext(file_name)[1].lower()
+            # CSVの場合
+            if ext == ".csv":
+                try:
+                    with st.spinner(f"{file_name} を読み込み中..."):
+                        response = requests.get(url_input, stream=True)
+                        # アクセス結果のチェック
+                        if response.status_code == 200:
+                            st.success(f"{file_name} へのアクセス成功（Status: {response.status_code}）")
+                        else:
+                            st.error(f"{file_name} へのアクセス拒否（Status: {response.status_code}）")
+                        response.raise_for_status()
+                        total_size = int(response.headers.get('content-length', 0))
+                        data_chunks = []
+                        bytes_downloaded = 0
+                        if total_size == 0:
+                            st.warning("ファイルサイズが不明なため、進捗表示はスキップします。")
+                            data_chunks.append(response.content)
+                        else:
+                            progress_bar = st.progress(0)
+                            chunk_size = 1024
+                            for chunk in response.iter_content(chunk_size=chunk_size):
+                                if chunk:
+                                    data_chunks.append(chunk)
+                                    bytes_downloaded += len(chunk)
+                                    progress = int(min(bytes_downloaded / total_size, 1.0) * 100)
+                                    progress_bar.progress(progress)
+                        csv_data = b"".join(data_chunks).decode("utf-8")
+                        from io import StringIO
+                        df = pd.read_csv(StringIO(csv_data))
+                    st.success(f"{file_name} の読み込みが完了しました。")
+                    st.write(f"**{file_name} プレビュー:**")
+                    st.dataframe(df.head())
+                except Exception as e:
+                    st.error(f"CSV URL プレビュー読み込みエラー ({file_name}): {e}")
+                file_info['lat_col'] = st.text_input(f"{file_name} の緯度カラム", value="lat", key=f"lat_url_{file_name}")
+                file_info['lon_col'] = st.text_input(f"{file_name} の経度カラム", value="lon", key=f"lon_url_{file_name}")
+            # GeoJSONの場合
+            elif ext == ".geojson":
+                try:
+                    with st.spinner(f"{file_name} を読み込み中..."):
+                        response = requests.get(url_input, stream=True)
+                        if response.status_code == 200:
+                            st.success(f"{file_name} へのアクセス成功（Status: {response.status_code}）")
+                        else:
+                            st.error(f"{file_name} へのアクセス拒否（Status: {response.status_code}）")
+                        response.raise_for_status()
+                        total_size = int(response.headers.get('content-length', 0))
+                        data_chunks = []
+                        bytes_downloaded = 0
+                        if total_size == 0:
+                            st.warning("ファイルサイズが不明なため、進捗表示はスキップします。")
+                            data_chunks.append(response.content)
+                        else:
+                            progress_bar = st.progress(0)
+                            chunk_size = 1024
+                            for chunk in response.iter_content(chunk_size=chunk_size):
+                                if chunk:
+                                    data_chunks.append(chunk)
+                                    bytes_downloaded += len(chunk)
+                                    progress = int(min(bytes_downloaded / total_size, 1.0) * 100)
+                                    progress_bar.progress(progress)
+                        geojson_data = b"".join(data_chunks).decode("utf-8")
+                        from io import StringIO
+                        gdf = gpd.read_file(StringIO(geojson_data))
+                    st.success(f"{file_name} の読み込みが完了しました。")
+                    st.write(f"**{file_name} プレビュー:**")
+                    st.dataframe(gdf.head())
+                except Exception as e:
+                    st.error(f"GeoJSON URL プレビュー読み込みエラー ({file_name}): {e}")
+                file_info['lat_col'] = st.text_input(f"{file_name} の緯度カラム", value="lat", key=f"lat_url_{file_name}")
+                file_info['lon_col'] = st.text_input(f"{file_name} の経度カラム", value="lon", key=f"lon_url_{file_name}")
+            # TIFFの場合
+            elif ext in [".tiff", ".tif"]:
+                try:
+                    with st.spinner(f"{file_name} を読み込み中..."):
+                        response = requests.get(url_input, stream=True)
+                        if response.status_code == 200:
+                            st.success(f"{file_name} へのアクセス成功（Status: {response.status_code}）")
+                        else:
+                            st.error(f"{file_name} へのアクセス拒否（Status: {response.status_code}）")
+                        response.raise_for_status()
+                        total_size = int(response.headers.get('content-length', 0))
+                        data_chunks = []
+                        bytes_downloaded = 0
+                        if total_size == 0:
+                            st.warning("ファイルサイズが不明なため、進捗表示はスキップします。")
+                            data_chunks.append(response.content)
+                        else:
+                            progress_bar = st.progress(0)
+                            chunk_size = 1024
+                            for chunk in response.iter_content(chunk_size=chunk_size):
+                                if chunk:
+                                    data_chunks.append(chunk)
+                                    bytes_downloaded += len(chunk)
+                                    progress = int(min(bytes_downloaded / total_size, 1.0) * 100)
+                                    progress_bar.progress(progress)
+                        tiff_data = b"".join(data_chunks)
+                        from rasterio.io import MemoryFile
+                        with MemoryFile(tiff_data) as memfile:
+                            with memfile.open() as src:
+                                meta = src.meta
+                    st.success(f"{file_name} の読み込みが完了しました。")
+                    st.write(f"**{file_name} メタデータ:**")
+                    st.json(meta)
+                except Exception as e:
+                    st.error(f"TIFF URL メタデータ読み込みエラー ({file_name}): {e}")
+                file_info['band'] = st.text_input(f"{file_name} の色分け用バンド", value="1", key=f"band_url_{file_name}")
+            selected_files.append(file_info)
 
     # 3. ファイルアップローダーからの入力
     st.subheader("【3】ファイルアップローダー")
