@@ -8,6 +8,8 @@ from rasterio.io import MemoryFile
 import matplotlib.pyplot as plt
 import folium
 from streamlit_folium import st_folium
+import StringIO
+import json
 
 def file_selection_screen():
     st.header("ファイル選択")
