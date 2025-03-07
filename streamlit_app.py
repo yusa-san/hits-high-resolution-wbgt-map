@@ -57,6 +57,12 @@ def file_selection_screen():
 
     # 2. URLからの入力
     st.subheader("【2】URLからファイル入力")
+    # キャッシュ用の状態を初期化（URL入力用）
+    if "url_file_info" not in st.session_state:
+        st.session_state.url_file_info = []
+    if "url_file_preview" not in st.session_state:
+        st.session_state.url_file_preview = {}
+
     url_input = st.text_input("URLを入力してください", key="url_input")
     if st.button("読み込み", key="load_url"):
         # st.success(f"読み込みボタンが押されました") # debug
@@ -98,6 +104,7 @@ def file_selection_screen():
                     st.success(f"{file_name} の読み込みが完了しました。")
                     st.write(f"**{file_name} プレビュー:**")
                     st.dataframe(df.head())
+                    st.session_state.url_file_preview[url_input] = df # 読み込んだCSVデータをキャッシュに保存
                     file_info['lat_col'] = st.text_input(f"{file_name} の緯度カラム", value="lat", key=f"lat_url_{file_name}")
                     file_info['lon_col'] = st.text_input(f"{file_name} の経度カラム", value="lon", key=f"lon_url_{file_name}")
                 except Exception as e:
@@ -135,6 +142,7 @@ def file_selection_screen():
                     st.success(f"{file_name} の読み込みが完了しました。")
                     st.write(f"**{file_name} プレビュー:**")
                     st.dataframe(gdf.head())
+                    st.session_state.url_file_preview[url_input] = gdf # 読み込んだgeojsonデータをキャッシュに保存
                     file_info['lat_col'] = st.text_input(f"{file_name} の緯度カラム", value="lat", key=f"lat_url_{file_name}")
                     file_info['lon_col'] = st.text_input(f"{file_name} の経度カラム", value="lon", key=f"lon_url_{file_name}")
                 except Exception as e:
@@ -173,10 +181,22 @@ def file_selection_screen():
                     st.success(f"{file_name} の読み込みが完了しました。")
                     st.write(f"**{file_name} メタデータ:**")
                     st.json(meta)
+                    st.session_state.url_file_preview[url_input] = meta # 読み込んだメタデータをキャッシュに保存
                     file_info['band'] = st.text_input(f"{file_name} の色分け用バンド", value="1", key=f"band_url_{file_name}")
                 except Exception as e:
                     st.error(f"TIFF URL メタデータ読み込みエラー ({file_name}): {e}")
-            selected_files.append(file_info)
+            st.session_state.url_file_info.append(file_info)
+
+    # 既に読み込み済みなら再表示
+    if url_input and url_input in st.session_state.url_file_preview:
+        preview = st.session_state.url_file_preview[url_input]
+        st.write(f"**{file_name} の再プレビュー:**")
+        if isinstance(preview, pd.DataFrame):
+            st.dataframe(preview.head())
+        elif isinstance(preview, gpd.GeoDataFrame):
+            st.dataframe(preview.head())
+        else:
+            st.json(preview)
 
     # 3. ファイルアップローダーからの入力
     st.subheader("【3】ファイルアップローダー")
