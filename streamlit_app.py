@@ -286,6 +286,7 @@ def file_selection_screen():
         st.write("### 選択されたファイル一覧:")
         for file_info in st.session_state.url_file_info:
             st.write(f"{file_info['name']} ({file_info['source']})")
+            st.write(f"file_info: {file_info}")
     else:
         st.write("ファイルが選択されていません。")
 
