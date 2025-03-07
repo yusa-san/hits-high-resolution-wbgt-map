@@ -63,8 +63,11 @@ def file_selection_screen():
     if "url_file_preview" not in st.session_state:
         st.session_state.url_file_preview = {}
 
-    url_input = st.text_input("URLを入力してください", key="url_input")
+    if "loaded_url" not in st.session_state:
+        st.session_state["loaded_url"] = ""
+    url_input = st.text_input("URLを入力してください", key="url_input", value=st.session_state["loaded_url"])
     if st.button("読み込み", key="load_url"):
+        st.session_state["loaded_url"] = url_input
         # st.success(f"読み込みボタンが押されました") # debug
         if url_input:
             file_name = url_input.split("/")[-1]
@@ -143,8 +146,6 @@ def file_selection_screen():
                     st.write(f"**{file_name} プレビュー:**")
                     st.dataframe(gdf.head())
                     st.session_state.url_file_preview[url_input] = gdf # 読み込んだgeojsonデータをキャッシュに保存
-                    file_info['lat_col'] = st.text_input(f"{file_name} の緯度カラム", value="lat", key=f"lat_url_{file_name}")
-                    file_info['lon_col'] = st.text_input(f"{file_name} の経度カラム", value="lon", key=f"lon_url_{file_name}")
                 except Exception as e:
                     st.error(f"GeoJSON URL プレビュー読み込みエラー ({file_name}): {e}")
             # TIFFの場合
