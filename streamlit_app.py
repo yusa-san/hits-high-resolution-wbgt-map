@@ -125,8 +125,10 @@ def file_selection_screen():
                                     progress = int(min(bytes_downloaded / total_size, 1.0) * 100)
                                     progress_bar.progress(progress)
                         geojson_data = b"".join(data_chunks).decode("utf-8")
-                        from io import StringIO
-                        gdf = gpd.read_file(StringIO(geojson_data))
+                        import json
+                        # geojson_data はすでに文字列として取得済み
+                        geojson_dict = json.loads(geojson_data)
+                        gdf = gpd.GeoDataFrame.from_features(geojson_dict["features"])
                     st.success(f"{file_name} の読み込みが完了しました。")
                     st.write(f"**{file_name} プレビュー:**")
                     st.dataframe(gdf.head())
