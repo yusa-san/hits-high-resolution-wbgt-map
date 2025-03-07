@@ -293,14 +293,17 @@ def display_dashboard(selected_files):
             if ext == ".csv":
                 try:
                     df = pd.read_csv(url)
-                    if "lat" in df.columns and "lon" in df.columns:
+                    # file_infoで指定された緯度・経度カラムを取得（デフォルトは"lat", "lon"）
+                    lat_col = file_info.get('lat_col', 'lat')
+                    lon_col = file_info.get('lon_col', 'lon')
+                    if lat_col in df.columns and lon_col in df.columns:
                         for idx, row in df.iterrows():
                             folium.Marker(
-                                location=[row["lat"], row["lon"]],
+                                location=[row[lat_col], row[lon_col]],
                                 popup=f"{name}: {row.to_dict()}"
                             ).add_to(m)
                     else:
-                        st.warning(f"CSVファイル {name} に 'lat' と 'lon' カラムが見つかりません。")
+                        st.warning(f"CSVファイル {name} に指定された緯度カラム '{lat_col}' と経度カラム '{lon_col}' が見つかりません。")
                 except Exception as e:
                     st.error(f"CSV URL {url} の読み込みエラー: {e}")
                     
@@ -318,14 +321,17 @@ def display_dashboard(selected_files):
             if ext == ".csv":
                 try:
                     df = pd.read_csv(file_info["file"])
-                    if "lat" in df.columns and "lon" in df.columns:
+                    # file_infoで指定された緯度・経度カラムを取得（デフォルトは"lat", "lon"）
+                    lat_col = file_info.get('lat_col', 'lat')
+                    lon_col = file_info.get('lon_col', 'lon')
+                    if lat_col in df.columns and lon_col in df.columns:
                         for idx, row in df.iterrows():
                             folium.Marker(
-                                location=[row["lat"], row["lon"]],
+                                location=[row[lat_col], row[lon_col]],
                                 popup=f"{name}: {row.to_dict()}"
                             ).add_to(m)
                     else:
-                        st.warning(f"アップロードされたCSVファイル {name} に 'lat' と 'lon' カラムが見つかりません。")
+                        st.warning(f"CSVファイル {name} に指定された緯度カラム '{lat_col}' と経度カラム '{lon_col}' が見つかりません。")
                 except Exception as e:
                     st.error(f"アップロードCSVファイル {name} の読み込みエラー: {e}")
                     
