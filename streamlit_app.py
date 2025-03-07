@@ -59,9 +59,55 @@ def file_selection_screen():
     st.write("選択されたファイル一覧:")
     if selected_files:
         for idx, file_info in enumerate(selected_files):
-            st.write(f"{file_info['name']} ({file_info['source']})")
-            file_info['lat_col'] = st.text_input(f"{file_info['name']} の緯度カラム", value="lat", key=f"lat_{idx}")
-            file_info['lon_col'] = st.text_input(f"{file_info['name']} の経度カラム", value="lon", key=f"lon_{idx}")
+            st.write(f"### {file_info['name']} ({file_info['source']})")
+            ext = os.path.splitext(file_info['name'])[1].lower()
+            if ext in [".csv"]:
+                try:
+                    if file_info["source"] == "folder":
+                        df = pd.read_csv(file_info["path"])
+                    elif file_info["source"] == "url":
+                        df = pd.read_csv(file_info["url"])
+                    elif file_info["source"] == "upload":
+                        file_info["file"].seek(0)
+                        df = pd.read_csv(file_info["file"])
+                    st.dataframe(df.head())
+                except Exception as e:
+                    st.error(f"CSVプレビュー読み込みエラー: {e}")
+                file_info['lat_col'] = st.text_input(f"{file_info['name']} の緯度カラム", value="lat", key=f"lat_{idx}")
+                file_info['lon_col'] = st.text_input(f"{file_info['name']} の経度カラム", value="lon", key=f"lon_{idx}")
+            elif ext in [".geojson"]:
+                try:
+                    if file_info["source"] == "folder":
+                        gdf = gpd.read_file(file_info["path"])
+                    elif file_info["source"] == "url":
+                        gdf = gpd.read_file(file_info["url"])
+                    elif file_info["source"] == "upload":
+                        file_info["file"].seek(0)
+                        gdf = gpd.read_file(file_info["file"])
+                    st.dataframe(gdf.head())
+                except Exception as e:
+                    st.error(f"GeoJSONプレビュー読み込みエラー: {e}")
+                file_info['lat_col'] = st.text_input(f"{file_info['name']} の緯度カラム", value="lat", key=f"lat_{idx}")
+                file_info['lon_col'] = st.text_input(f"{file_info['name']} の経度カラム", value="lon", key=f"lon_{idx}")
+            elif ext in [".tiff", ".tif"]:
+                try:
+                    if file_info["source"] == "folder":
+                        with rasterio.open(file_info["path"]) as src:
+                            meta = src.meta
+                    elif file_info["source"] == "url":
+                        response = requests.get(file_info["url"])
+                        response.raise_for_status()
+                        with MemoryFile(response.content) as memfile:
+                            with memfile.open() as src:
+                                meta = src.meta
+                    elif file_info["source"] == "upload":
+                        file_info["file"].seek(0)
+                        with rasterio.open(file_info["file"]) as src:
+                            meta = src.meta
+                    st.json(meta)
+                except Exception as e:
+                    st.error(f"ラスターデータのメタデータ読み込みエラー: {e}")
+                file_info['band'] = st.text_input(f"{file_info['name']} の色分け用バンド", value="1", key=f"band_{idx}")
     else:
         st.write("ファイルが選択されていません。")
     
