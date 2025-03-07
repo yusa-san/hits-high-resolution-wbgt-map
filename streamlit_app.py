@@ -59,6 +59,7 @@ def file_selection_screen():
     st.subheader("【2】URLからファイル入力")
     url_input = st.text_input("URLを入力してください", key="url_input")
     if st.button("読み込み", key="load_url"):
+        st.success(f"ボタンが押されました")
         if url_input:
             file_name = url_input.split("/")[-1]
             file_info = {"source": "url", "name": file_name, "url": url_input}
@@ -125,7 +126,6 @@ def file_selection_screen():
                                     progress = int(min(bytes_downloaded / total_size, 1.0) * 100)
                                     progress_bar.progress(progress)
                         geojson_data = b"".join(data_chunks).decode("utf-8")
-                        st.write(f"{file_name} を読み込みます。")
                         import json
                         # geojson_data はすでに文字列として取得済み
                         geojson_dict = json.loads(geojson_data)
