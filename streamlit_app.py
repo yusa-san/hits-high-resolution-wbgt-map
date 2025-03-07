@@ -58,8 +58,10 @@ def file_selection_screen():
     
     st.write("選択されたファイル一覧:")
     if selected_files:
-        for file_info in selected_files:
+        for idx, file_info in enumerate(selected_files):
             st.write(f"{file_info['name']} ({file_info['source']})")
+            file_info['lat_col'] = st.text_input(f"{file_info['name']} の緯度カラム", value="lat", key=f"lat_{idx}")
+            file_info['lon_col'] = st.text_input(f"{file_info['name']} の経度カラム", value="lon", key=f"lon_{idx}")
     else:
         st.write("ファイルが選択されていません。")
     
