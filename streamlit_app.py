@@ -7,7 +7,7 @@ import rasterio
 from rasterio.io import MemoryFile
 import matplotlib.pyplot as plt
 import folium
-from streamlit_folium import folium_static
+from streamlit_folium import st_folium
 
 def file_selection_screen():
     st.header("ファイル選択画面")
@@ -207,7 +207,7 @@ def display_dashboard(selected_files):
                 st.info(f"アップロードされたTIFFファイル {name} の地図上へのオーバーレイは現状実装されていません。")
     
     # 地図を表示
-    folium_static(m)
+    st_folium(m)
 
 def main():
     st.title("データ表示ダッシュボードアプリ")
