@@ -59,14 +59,16 @@ def file_selection_screen():
     st.subheader("【2】URLからファイル入力")
     url_input = st.text_input("URLを入力してください", key="url_input")
     if st.button("読み込み", key="load_url"):
-        st.success(f"ボタンが押されました")
+        st.success(f"読み込みボタンが押されました") # debug
         if url_input:
             file_name = url_input.split("/")[-1]
             file_info = {"source": "url", "name": file_name, "url": url_input}
             ext = os.path.splitext(file_name)[1].lower()
+            st.success(f"{ext}の{file_name}を読み込みます。") # debug
             # CSVの場合
             if ext == ".csv":
                 try:
+                    st.success(f"csvのtryの中に入りました")
                     with st.spinner(f"{file_name} を読み込み中..."):
                         response = requests.get(url_input, stream=True)
                         # アクセス結果のチェック
@@ -103,6 +105,7 @@ def file_selection_screen():
             # GeoJSONの場合
             elif ext == ".geojson":
                 try:
+                    st.success(f"geojsonのtryの中に入りました")
                     with st.spinner(f"{file_name} を読み込み中..."):
                         response = requests.get(url_input, stream=True)
                         if response.status_code == 200:
