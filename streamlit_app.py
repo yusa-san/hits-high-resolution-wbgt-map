@@ -162,17 +162,17 @@ def display_dashboard(selected_files):
     folium_static(m)
 
 def main():
-    st.sidebar.title("メニュー")
-    # 画面モードを選択（ファイル選択画面とダッシュボード表示画面を切り替え）
-    menu = st.sidebar.radio("画面選択", ["ファイル選択", "ダッシュボード表示"])
+    st.title("データ表示ダッシュボードアプリ")
+    tab1, tab2 = st.tabs(["ファイル選択", "ダッシュボード表示"])
     
-    if menu == "ファイル選択":
+    with tab1:
         file_selection_screen()
-    elif menu == "ダッシュボード表示":
+    
+    with tab2:
         if "selected_files" in st.session_state and st.session_state["selected_files"]:
             display_dashboard(st.session_state["selected_files"])
         else:
-            st.warning("まず、ファイル選択画面でファイルを選択してください。")
+            st.warning("まずファイル選択タブでファイルを選択してください。")
 
 if __name__ == "__main__":
     main()
