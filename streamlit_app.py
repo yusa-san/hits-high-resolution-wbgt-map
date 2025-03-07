@@ -8,7 +8,7 @@ from rasterio.io import MemoryFile
 import matplotlib.pyplot as plt
 import folium
 from streamlit_folium import st_folium
-import StringIO
+from io import StringIO
 import json
 
 def file_selection_screen():
