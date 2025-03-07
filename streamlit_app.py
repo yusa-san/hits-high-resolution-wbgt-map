@@ -59,16 +59,16 @@ def file_selection_screen():
     st.subheader("【2】URLからファイル入力")
     url_input = st.text_input("URLを入力してください", key="url_input")
     if st.button("読み込み", key="load_url"):
-        st.success(f"読み込みボタンが押されました") # debug
+        # st.success(f"読み込みボタンが押されました") # debug
         if url_input:
             file_name = url_input.split("/")[-1]
             file_info = {"source": "url", "name": file_name, "url": url_input}
             ext = os.path.splitext(file_name)[1].lower()
-            st.success(f"{ext}の{file_name}を読み込みます。") # debug
+            # st.success(f"{ext}の{file_name}を読み込みます。") # debug
             # CSVの場合
             if ext == ".csv":
                 try:
-                    st.success(f"csvのtryの中に入りました")
+                    # st.success(f"csvのtryの中に入りました")
                     with st.spinner(f"{file_name} を読み込み中..."):
                         response = requests.get(url_input, stream=True)
                         # アクセス結果のチェック
@@ -105,7 +105,7 @@ def file_selection_screen():
             # GeoJSONの場合
             elif ext == ".geojson":
                 try:
-                    st.success(f"geojsonのtryの中に入りました")
+                    # st.success(f"geojsonのtryの中に入りました")
                     with st.spinner(f"{file_name} を読み込み中..."):
                         response = requests.get(url_input, stream=True)
                         if response.status_code == 200:
@@ -130,8 +130,7 @@ def file_selection_screen():
                                     progress_bar.progress(progress)
                         geojson_data = b"".join(data_chunks).decode("utf-8")
                         import json
-                        # geojson_data はすでに文字列として取得済み
-                        geojson_dict = json.loads(geojson_data)
+                        geojson_dict = json.loads(geojson_data) # geojson_data はすでに文字列として取得済み
                         gdf = gpd.GeoDataFrame.from_features(geojson_dict["features"])
                     st.success(f"{file_name} の読み込みが完了しました。")
                     st.write(f"**{file_name} プレビュー:**")
@@ -143,6 +142,7 @@ def file_selection_screen():
             # TIFFの場合
             elif ext in [".tiff", ".tif"]:
                 try:
+                    # st.success(f"tiffまたはtifのtryの中に入りました")
                     with st.spinner(f"{file_name} を読み込み中..."):
                         response = requests.get(url_input, stream=True)
                         if response.status_code == 200:
@@ -245,25 +245,25 @@ def display_dashboard(selected_files):
             if ext == ".csv":
                 try:
                     df = pd.read_csv(file_path)
-                    # CSVに"lat"と"lon"のカラムがある場合、各行をマーカーで追加
-                    if "lat" in df.columns and "lon" in df.columns:
+                    # file_infoで指定された緯度・経度カラムを取得（デフォルトは"lat", "lon"）
+                    lat_col = file_info.get('lat_col', 'lat')
+                    lon_col = file_info.get('lon_col', 'lon')
+                    if lat_col in df.columns and lon_col in df.columns:
                         for idx, row in df.iterrows():
                             folium.Marker(
-                                location=[row["lat"], row["lon"]],
+                                location=[row[lat_col], row[lon_col]],
                                 popup=f"{name}: {row.to_dict()}"
                             ).add_to(m)
                     else:
-                        st.warning(f"CSVファイル {name} に 'lat' と 'lon' カラムが見つかりません。")
+                        st.warning(f"CSVファイル {name} に指定された緯度カラム '{lat_col}' と経度カラム '{lon_col}' が見つかりません。")
                 except Exception as e:
                     st.error(f"CSVファイル {name} の読み込みエラー: {e}")
-                    
             elif ext == ".geojson":
                 try:
                     gdf = gpd.read_file(file_path)
                     folium.GeoJson(gdf).add_to(m)
                 except Exception as e:
                     st.error(f"GeoJSONファイル {name} の読み込みエラー: {e}")
-                    
             elif ext in [".tiff", ".tif"]:
                 st.info(f"TIFFファイル {name} の地図上へのオーバーレイは現状実装されていません。")
         
