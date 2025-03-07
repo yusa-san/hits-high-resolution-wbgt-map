@@ -58,159 +58,185 @@ def file_selection_screen():
 
     # 2. URLからの入力
     st.subheader("【2】URLからファイル入力")
-    # キャッシュ用の状態を初期化（URL入力用）
-    if "url_file_info" not in st.session_state:
-        st.session_state.url_file_info = []
-    if "url_file_preview" not in st.session_state:
-        st.session_state.url_file_preview = {}
 
-    if "loaded_url" not in st.session_state:
-        st.session_state["loaded_url"] = ""
-    url_input = st.text_input("URLを入力してください", key="url_input", value=st.session_state["loaded_url"])
-    if st.button("読み込み", key="load_url"): # 読み込みボタンを押したときだけ実行し、DataFrameをセッションステートに格納
-        st.session_state["loaded_url"] = url_input
-        # st.success(f"読み込みボタンが押されました") # debug
-        if url_input:
-            file_name = url_input.split("/")[-1]
-            file_info = {"source": "url", "name": file_name, "url": url_input}
+    # -------------------------------------------------------
+    # 1. セッションステートの初期化
+    # -------------------------------------------------------
+    # ここで複数ファイルの情報を保持するリストを用意する
+    # url: 入力されたURL
+    # loaded: ロード済かどうか (bool)
+    # preview: 読み込んだDataFrame/GeoDataFrame/メタデータなど
+    # lat_col, lon_col, band: カラム設定用（必要に応じて初期値を入れておく）
+    if "url_entries" not in st.session_state:
+        st.session_state["url_entries"] = [
+            {
+                "url": "",
+                "loaded": False,
+                "preview": None,
+                "lat_col": "lat",
+                "lon_col": "lon",
+                "band": "1",
+            }
+        ]
+
+    # -------------------------------------------------------
+    # 2. URL入力欄とファイル読み込みのロジック
+    # -------------------------------------------------------
+    # url_entriesリストを順番に処理する。最後のURLが読み込み済みの場合、新しいURL入力欄を追加する。
+    for i, entry in enumerate(st.session_state["url_entries"]):
+        st.write(f"#### ファイル {i+1} のURL入力")
+
+        # URL入力欄
+        url_input = st.text_input(
+            "URLを入力してください",
+            key=f"url_input_{i}",  # キーをユニークに
+            value=entry["url"]
+        )
+
+        # “読み込み”ボタン
+        if not entry["loaded"] and st.button("読み込み", key=f"load_url_{i}"):
+            # URLをセッションステートにも反映
+            st.session_state["url_entries"][i]["url"] = url_input
+            if url_input:
+                file_name = url_input.split("/")[-1]
+                ext = os.path.splitext(file_name)[1].lower()
+
+                # -------------------------------------------------------
+                # 2-1. ファイルの種類毎に読み込み
+                # -------------------------------------------------------
+                try:
+                    with st.spinner(f"{file_name} を読み込み中..."):
+                        response = requests.get(url_input, stream=True)
+
+                        # ステータスコードチェック
+                        if response.status_code == 200:
+                            st.success(f"{file_name} へのアクセス成功（Status: {response.status_code}）")
+                        else:
+                            st.error(f"{file_name} へのアクセス拒否（Status: {response.status_code}）")
+                        response.raise_for_status()
+
+                        # ダウンロード進捗
+                        total_size = int(response.headers.get("content-length", 0))
+                        data_chunks = []
+                        bytes_downloaded = 0
+                        chunk_size = 1024
+
+                        # ファイルサイズが不明かどうかで処理を分ける
+                        if total_size == 0:
+                            st.warning("ファイルサイズが不明なため、進捗表示はスキップします。")
+                            data_chunks.append(response.content)
+                        else:
+                            progress_bar = st.progress(0)
+                            for chunk in response.iter_content(chunk_size=chunk_size):
+                                if chunk:
+                                    data_chunks.append(chunk)
+                                    bytes_downloaded += len(chunk)
+                                    progress = int(min(bytes_downloaded / total_size, 1.0) * 100)
+                                    progress_bar.progress(progress)
+
+                        # -------------------------------------------------------
+                        # 2-2. 取得データの読み込み処理
+                        # -------------------------------------------------------
+                        if ext == ".csv":
+                            csv_data = b"".join(data_chunks).decode("utf-8")
+                            df = pd.read_csv(StringIO(csv_data))
+                            st.success(f"{file_name} の読み込みが完了しました。")
+                            st.write(f"**{file_name} プレビュー:**")
+                            st.dataframe(df.head())
+                            st.session_state["url_entries"][i]["preview"] = df
+
+                        elif ext == ".geojson":
+                            geojson_data = b"".join(data_chunks).decode("utf-8")
+                            geojson_dict = json.loads(geojson_data)
+                            gdf = gpd.GeoDataFrame.from_features(geojson_dict["features"])
+                            st.success(f"{file_name} の読み込みが完了しました。")
+                            st.write(f"**{file_name} プレビュー:**")
+                            st.dataframe(gdf.head())
+                            st.session_state["url_entries"][i]["preview"] = gdf
+
+                        elif ext in [".tiff", ".tif"]:
+                            tiff_data = b"".join(data_chunks)
+                            with MemoryFile(tiff_data) as memfile:
+                                with memfile.open() as src:
+                                    meta = src.meta
+                            st.success(f"{file_name} の読み込みが完了しました。")
+                            st.write(f"**{file_name} メタデータ:**")
+                            st.json(meta)
+                            st.session_state["url_entries"][i]["preview"] = meta
+
+                        else:
+                            st.error(f"対応していない拡張子です: {ext}")
+                            st.stop()
+
+                    # ロード完了フラグ
+                    st.session_state["url_entries"][i]["loaded"] = True
+
+                except Exception as e:
+                    st.error(f"ファイル読み込みエラー ({file_name}): {e}")
+
+        # -------------------------------------------------------
+        # 3. 既に読み込み済みならプレビュー表示 & カラム指定表示
+        # -------------------------------------------------------
+        if entry["loaded"]:
+            file_name = entry["url"].split("/")[-1]
             ext = os.path.splitext(file_name)[1].lower()
-            # st.success(f"{ext}の{file_name}を読み込みます。") # debug
-            # CSVの場合
+            st.write(f"**{file_name} の再プレビュー:**")
+
+            preview_data = st.session_state["url_entries"][i]["preview"]
+            if isinstance(preview_data, pd.DataFrame):
+                st.dataframe(preview_data.head())
+            elif isinstance(preview_data, gpd.GeoDataFrame):
+                st.dataframe(preview_data.head())
+            else:
+                # TIFFなどメタデータの場合
+                st.json(preview_data)
+
+            # CSVの場合は緯度経度カラム、TIFFの場合はバンドなどを入力
             if ext == ".csv":
-                try:
-                    # st.success(f"csvのtryの中に入りました")
-                    with st.spinner(f"{file_name} を読み込み中..."):
-                        response = requests.get(url_input, stream=True)
-                        # アクセス結果のチェック
-                        if response.status_code == 200:
-                            st.success(f"{file_name} へのアクセス成功（Status: {response.status_code}）")
-                        else:
-                            st.error(f"{file_name} へのアクセス拒否（Status: {response.status_code}）")
-                        response.raise_for_status()
-                        total_size = int(response.headers.get('content-length', 0))
-                        data_chunks = []
-                        bytes_downloaded = 0
-                        if total_size == 0:
-                            st.warning("ファイルサイズが不明なため、進捗表示はスキップします。")
-                            data_chunks.append(response.content)
-                        else:
-                            progress_bar = st.progress(0)
-                            chunk_size = 1024
-                            for chunk in response.iter_content(chunk_size=chunk_size):
-                                if chunk:
-                                    data_chunks.append(chunk)
-                                    bytes_downloaded += len(chunk)
-                                    progress = int(min(bytes_downloaded / total_size, 1.0) * 100)
-                                    progress_bar.progress(progress)
-                        csv_data = b"".join(data_chunks).decode("utf-8")
-                        from io import StringIO
-                        df = pd.read_csv(StringIO(csv_data))
-                    st.success(f"{file_name} の読み込みが完了しました。")
-                    st.write(f"**{file_name} プレビュー:**")
-                    st.dataframe(df.head())
-                    st.session_state["url_loaded"] = True
-                    st.session_state.url_file_preview[url_input] = df # 読み込んだCSVデータをキャッシュに保存
-                except Exception as e:
-                    st.error(f"CSV URL プレビュー読み込みエラー ({file_name}): {e}")
-            # GeoJSONの場合
-            elif ext == ".geojson":
-                try:
-                    # st.success(f"geojsonのtryの中に入りました")
-                    with st.spinner(f"{file_name} を読み込み中..."):
-                        response = requests.get(url_input, stream=True)
-                        if response.status_code == 200:
-                            st.success(f"{file_name} へのアクセス成功（Status: {response.status_code}）")
-                        else:
-                            st.error(f"{file_name} へのアクセス拒否（Status: {response.status_code}）")
-                        response.raise_for_status()
-                        total_size = int(response.headers.get('content-length', 0))
-                        data_chunks = []
-                        bytes_downloaded = 0
-                        if total_size == 0:
-                            st.warning("ファイルサイズが不明なため、進捗表示はスキップします。")
-                            data_chunks.append(response.content)
-                        else:
-                            progress_bar = st.progress(0)
-                            chunk_size = 1024
-                            for chunk in response.iter_content(chunk_size=chunk_size):
-                                if chunk:
-                                    data_chunks.append(chunk)
-                                    bytes_downloaded += len(chunk)
-                                    progress = int(min(bytes_downloaded / total_size, 1.0) * 100)
-                                    progress_bar.progress(progress)
-                        geojson_data = b"".join(data_chunks).decode("utf-8")
-                        import json
-                        geojson_dict = json.loads(geojson_data) # geojson_data はすでに文字列として取得済み
-                        gdf = gpd.GeoDataFrame.from_features(geojson_dict["features"])
-                    st.success(f"{file_name} の読み込みが完了しました。")
-                    st.write(f"**{file_name} プレビュー:**")
-                    st.dataframe(gdf.head())
-                    st.session_state["url_loaded"] = True
-                    st.session_state.url_file_preview[url_input] = gdf # 読み込んだgeojsonデータをキャッシュに保存
-                except Exception as e:
-                    st.error(f"GeoJSON URL プレビュー読み込みエラー ({file_name}): {e}")
-            # TIFFの場合
+                lat_col_key = f"lat_column_{i}"
+                lon_col_key = f"lon_column_{i}"
+                lat_default = st.session_state["url_entries"][i].get("lat_col", "lat")
+                lon_default = st.session_state["url_entries"][i].get("lon_col", "lon")
+
+                st.session_state["url_entries"][i]["lat_col"] = st.text_input(
+                    f"{file_name} の緯度カラム", value=lat_default, key=lat_col_key
+                )
+                st.session_state["url_entries"][i]["lon_col"] = st.text_input(
+                    f"{file_name} の経度カラム", value=lon_default, key=lon_col_key
+                )
+
             elif ext in [".tiff", ".tif"]:
-                try:
-                    # st.success(f"tiffまたはtifのtryの中に入りました")
-                    with st.spinner(f"{file_name} を読み込み中..."):
-                        response = requests.get(url_input, stream=True)
-                        if response.status_code == 200:
-                            st.success(f"{file_name} へのアクセス成功（Status: {response.status_code}）")
-                        else:
-                            st.error(f"{file_name} へのアクセス拒否（Status: {response.status_code}）")
-                        response.raise_for_status()
-                        total_size = int(response.headers.get('content-length', 0))
-                        data_chunks = []
-                        bytes_downloaded = 0
-                        if total_size == 0:
-                            st.warning("ファイルサイズが不明なため、進捗表示はスキップします。")
-                            data_chunks.append(response.content)
-                        else:
-                            progress_bar = st.progress(0)
-                            chunk_size = 1024
-                            for chunk in response.iter_content(chunk_size=chunk_size):
-                                if chunk:
-                                    data_chunks.append(chunk)
-                                    bytes_downloaded += len(chunk)
-                                    progress = int(min(bytes_downloaded / total_size, 1.0) * 100)
-                                    progress_bar.progress(progress)
-                        tiff_data = b"".join(data_chunks)
-                        from rasterio.io import MemoryFile
-                        with MemoryFile(tiff_data) as memfile:
-                            with memfile.open() as src:
-                                meta = src.meta
-                    st.success(f"{file_name} の読み込みが完了しました。")
-                    st.write(f"**{file_name} メタデータ:**")
-                    st.json(meta)
-                    st.session_state["url_loaded"] = True
-                    st.session_state.url_file_preview[url_input] = meta # 読み込んだメタデータをキャッシュに保存
-                except Exception as e:
-                    st.error(f"TIFF URL メタデータ読み込みエラー ({file_name}): {e}")
+                band_key = f"band_url_{i}"
+                band_default = st.session_state["url_entries"][i].get("band", "1")
+                st.session_state["url_entries"][i]["band"] = st.text_input(
+                    f"{file_name} の色分け用バンド", value=band_default, key=band_key
+                )
 
-            # url_loaded が True の場合のみ、常に緯度/経度の入力欄を表示する
-            if st.session_state.get("url_loaded", False):
-                if ext == ".csv":
-                    # 既にセッション状態にある値を初期値として使用
-                    lat_default = st.session_state.get(f"lat_column_{file_name}", "lat")
-                    lon_default = st.session_state.get(f"lon_column_{file_name}", "lon")
-                    file_info['lat_col'] = st.text_input(f"{file_name} の緯度カラム", value=lat_default, key=f"lat_column_{file_name}")
-                    file_info['lon_col'] = st.text_input(f"{file_name} の経度カラム", value=lon_default, key=f"lon_column_{file_name}")
-                elif ext in [".tiff", ".tif"]:
-                    file_info['band'] = st.text_input(f"{file_name} の色分け用バンド", value="1", key=f"band_url_{file_name}")
-            st.session_state.url_file_info.append(file_info)
-
-    # 既に読み込み済みなら再表示
-    if url_input and url_input in st.session_state.url_file_preview:
-        preview = st.session_state.url_file_preview[url_input]
-        file_name = url_input.split("/")[-1]
-        st.write(f"**{file_name} の再プレビュー:**")
-        if isinstance(preview, pd.DataFrame):
-            st.dataframe(preview.head())
-        elif isinstance(preview, gpd.GeoDataFrame):
-            st.dataframe(preview.head())
-        else:
-            st.json(preview)
+    # -------------------------------------------------------
+    # 4. “次のファイル入力”の自動追加
+    #    最後のエントリがloaded=Trueになったら、新規URL入力欄を追加する
+    # -------------------------------------------------------
+    last_index = len(st.session_state["url_entries"]) - 1
+    if st.session_state["url_entries"][last_index]["loaded"]:
+        # すでに別のURL欄が追加済みでなければ追加
+        # （例：連続再実行で2つ以上増えないようにチェックする）
+        # 下のように単純に追加すると、読み込むたび無限に増えるので
+        # 「まだ空のURL欄を持つエントリが存在しない場合のみ追加」などのチェックを入れる
+        empty_urls = [
+            ent for ent in st.session_state["url_entries"] 
+            if ent["url"] == "" and not ent["loaded"]
+        ]
+        if not empty_urls:
+            st.session_state["url_entries"].append(
+                {
+                    "url": "",
+                    "loaded": False,
+                    "preview": None,
+                    "lat_col": "lat",
+                    "lon_col": "lon",
+                    "band": "1",
+                }
+            )
 
     # 3. ファイルアップローダーからの入力
     st.subheader("【3】ファイルアップローダー")
