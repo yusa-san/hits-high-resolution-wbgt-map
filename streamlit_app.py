@@ -318,17 +318,17 @@ def file_selection_screen():
     if "url_entries" in st.session_state and st.session_state["url_entries"]: # URL入力によるファイル情報
         st.write("#### URL入力:")
         for file_info in st.session_state["url_entries"]:
-            st.write(f"{file_info.get("name", "error:name")} ({file_info.get("source", "error:source")})")
+            st.write(f"{file_info.get('name', 'error:name')} ({file_info.get('source', 'error:source')})")
             st.write(f"file_info: {file_info}")
     elif "folder_entries" in st.session_state and st.session_state["folder_entries"]: # Inputフォルダからのファイル情報
         st.write("#### Inputフォルダ:")
         for file_info in st.session_state["folder_entries"]:
-            st.write(f"{file_info.get("name", "error:name")} ({file_info.get("source", "error:source")})")
+            st.write(f"{file_info.get('name', 'error:name')} ({file_info.get('source', 'error:source')})")
             st.write(f"file_info: {file_info}")
     elif "upload_entries" in st.session_state and st.session_state["upload_entries"]:  #アップロードによるファイル情報
         st.write("#### アップロード:")
         for file_info in st.session_state["upload_entries"]:
-            st.write(f"{file_info.get("name", "error:name")} ({file_info.get("source", "error:source")})")
+            st.write(f"{file_info.get('name', 'error:name')} ({file_info.get('source', 'error:source')})")
             st.write(f"file_info: {file_info}")
     else:
         st.write("ファイルが選択されていません。")
