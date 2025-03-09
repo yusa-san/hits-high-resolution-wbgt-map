@@ -680,11 +680,11 @@ def display_dashboard_plotly_pydeck():
                 lon_col = file_info.get("lon_col", "lon")
                 st.write(f"lat_col: {lat_col} lon_col: {lon_col}")
                 if df is not None:
-                    st.write(f"count of rows: {df.count}")
+                    st.write(f"df: {df.describe()}")
                     # 大きなデータの場合はサンプルを抽出（例：50,000行）
-                    if len(df) > 50000:
-                        df_sample = df.sample(n=50000, random_state=42)
-                        st.warning(f"{file_name}を50000行にサンプル済み")
+                    if len(df) > 110000:
+                        df_sample = df.sample(n=110000, random_state=42)
+                        st.warning(f"{file_name}を110000行にサンプル済み")
                     else:
                         df_sample = df
                 if lat_col in df_sample.columns and lon_col in df_sample.columns:
@@ -734,7 +734,7 @@ def display_dashboard_plotly_pydeck():
             try:
                 gdf = file_info.get("preview", None)
                 if gdf is not None:
-                    st.write(f"count of rows: {gdf.count}")
+                    st.write(f"gdf: {gdf.describe()}")
                     if len(gdf) > 50000:
                         gdf_sample = gdf.sample(n=50000, random_state=42)
                         st.warning(f"{file_name}を50000行にサンプル済み")
