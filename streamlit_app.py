@@ -207,9 +207,6 @@ def file_selection_screen():
                     f"{file_name} の経度カラム", value=lon_default, key=lon_col_key
                 )
 
-                st.write(f"lat_col_key={lat_col_key}")
-                st.write(f"session_state['lat_col']={st.session_state["url_entries"][i]["lat_col"]}")
-
             elif ext in [".tiff", ".tif"]:
                 band_key = f"band_url_{i}"
                 band_default = st.session_state["url_entries"][i].get("band", "1")
