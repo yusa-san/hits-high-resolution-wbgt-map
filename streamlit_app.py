@@ -181,9 +181,8 @@ def file_selection_screen():
             if ext == ".csv":
                 lat_col_key = f"lat_column_{i}"
                 lon_col_key = f"lon_column_{i}"
-                lat_default = st.session_state["url_entries"][i].get("lat_col", "lat")
-                lon_default = st.session_state["url_entries"][i].get("lon_col", "lon")
-
+                lat_default = st.session_state.get(f"lat_column_{i}", "lat")
+                lon_default = st.session_state.get(f"lon_column_{i}", "lon")
                 st.session_state["url_entries"][i]["lat_col"] = st.text_input(
                     f"{file_name} の緯度カラム", value=lat_default, key=lat_col_key
                 )
