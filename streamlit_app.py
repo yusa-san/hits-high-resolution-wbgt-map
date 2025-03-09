@@ -722,7 +722,7 @@ def display_dashboard_plotly_pydeck():
                         data=df_sample,
                         get_position=[lon_col, lat_col],
                         get_fill_color=get_color_expr,
-                        get_radius=50,
+                        get_radius=30,
                     )
                     map_layers.append(layer)
                 else:
@@ -780,7 +780,7 @@ def display_dashboard_plotly_pydeck():
                         pickable=True,
                         auto_highlight=True,
                         stroked=True,
-                        get_radius=50,
+                        get_radius=30,
                     )
                     map_layers.append(layer)
                 else:
