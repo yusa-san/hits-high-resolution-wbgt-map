@@ -315,6 +315,7 @@ def file_selection_screen():
 
     # 選択されたファイルの一覧
     st.write("### 選択されたファイル一覧:")
+    print(st.session_state)
     if "url_entries" in st.session_state and st.session_state["url_entries"]: # URL入力によるファイル情報
         st.write("#### URL入力:")
         for file_info in st.session_state["url_entries"]:
