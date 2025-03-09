@@ -660,8 +660,8 @@ def display_dashboard_plotly_pydeck():
     if "upload_entries" in st.session_state:
         all_entries.extend(st.session_state["upload_entries"])
 
-    st.write("all_entries:")
-    st.write(all_entries)
+    st.sidebar.write("all_entries:")
+    st.sidebar.write(all_entries)
     
     # --- Pydeck 用：大容量地理空間ファイルの表示 ---
     map_layers = []
@@ -675,16 +675,16 @@ def display_dashboard_plotly_pydeck():
         if ext == ".csv":
             try:
                 df = file_info.get("preview", None)
-                st.write(f"file_name: {file_info.get('name', None)}")
+                st.sidebar.write(f"file_name: {file_info.get('name', None)}")
                 lat_col = file_info.get("lat_col", "lat")
                 lon_col = file_info.get("lon_col", "lon")
-                st.write(f"lat_col: {lat_col} lon_col: {lon_col}")
+                st.sidebar.write(f"lat_col: {lat_col} lon_col: {lon_col}")
                 if df is not None:
-                    st.write(df.describe())
+                    st.sidebar.write(df.describe())
                     # 大きなデータの場合はサンプルを抽出（例：50,000行）
                     if len(df) > 110000:
                         df_sample = df.sample(n=110000, random_state=42)
-                        st.warning(f"{file_name}を110000行にサンプル済み")
+                        st.sidebar.warning(f"{file_name}を110000行にサンプル済み")
                     else:
                         df_sample = df
                 if lat_col in df_sample.columns and lon_col in df_sample.columns:
@@ -692,10 +692,10 @@ def display_dashboard_plotly_pydeck():
                     all_lon.extend(df_sample[lon_col].dropna().tolist())
                     # 属性カラムによる色分け
                     columns_list = df_sample.columns
-                    color_attr = st.selectbox("Inputフォルダ内のファイル", columns_list)
+                    color_attr = st.sidebar.selectbox("Inputフォルダ内のファイル", columns_list)
                     if color_attr and color_attr in df_sample.columns:
                         # プルダウンでカラーマップを選択
-                        cmap_choice = st.selectbox(
+                        cmap_choice = st.sidebar.selectbox(
                             "カラーマップを選択",
                             ["terrain", "Reds", "Blues", "Greens", "cividis", "magma", "viridis", "twilight", "cool", "coolwarm", "spring", "summer", "autumn", "winter"],
                             key=f"cmap_{file_info.get('name')}"
@@ -726,26 +726,26 @@ def display_dashboard_plotly_pydeck():
                     )
                     map_layers.append(layer)
                 else:
-                    st.warning(f"CSVファイル {file_name} に指定された緯度/経度カラムが見つかりません。")
+                    st.sidebar.warning(f"CSVファイル {file_name} に指定された緯度/経度カラムが見つかりません。")
             except Exception as e:
-                st.error(f"CSVファイル {file_name} のマップレイヤー生成エラー: {e}")
+                st.sidebar.error(f"CSVファイル {file_name} のマップレイヤー生成エラー: {e}")
         # GeoJSONの場合
         elif ext == ".geojson":
             try:
                 gdf = file_info.get("preview", None)
                 if gdf is not None:
-                    st.write(gdf.describe())
+                    st.sidebar.write(gdf.describe())
                     if len(gdf) > 50000:
                         gdf_sample = gdf.sample(n=50000, random_state=42)
-                        st.warning(f"{file_name}を50000行にサンプル済み")
+                        st.sidebar.warning(f"{file_name}を50000行にサンプル済み")
                     else:
                         gdf_sample = gdf
                     # 属性カラムによる色分け
                     columns_list = gdf_sample.columns
-                    color_attr = st.selectbox("Inputフォルダ内のファイル", columns_list)
+                    color_attr = st.sidebar.selectbox("Inputフォルダ内のファイル", columns_list)
                     if color_attr and color_attr in gdf_sample.columns:
                         # プルダウンでカラーマップを選択
-                        cmap_choice = st.selectbox(
+                        cmap_choice = st.sidebar.selectbox(
                             "カラーマップを選択",
                             ["terrain", "Reds", "Blues", "Greens", "cividis", "magma", "viridis", "twilight", "cool", "coolwarm", "spring", "summer", "autumn", "winter"],
                             key=f"cmap_{file_info.get('name')}"
@@ -784,11 +784,11 @@ def display_dashboard_plotly_pydeck():
                     )
                     map_layers.append(layer)
                 else:
-                    st.warning(f"GeoJSONファイル {file_name} の読み込みに失敗しました。")
+                    st.sidebar.warning(f"GeoJSONファイル {file_name} の読み込みに失敗しました。")
             except Exception as e:
-                st.error(f"GeoJSONファイル {file_name} のマップレイヤー生成エラー: {e}")
+                st.sidebar.error(f"GeoJSONファイル {file_name} のマップレイヤー生成エラー: {e}")
         elif ext in [".tiff", ".tif"]:
-            st.info(f"TIFFファイル {file_name} はマップ表示対象外です。")
+            st.sidebar.info(f"TIFFファイル {file_name} はマップ表示対象外です。")
     
     # 自動で中心とズームレベルを設定
     if all_lat and all_lon:
@@ -852,7 +852,7 @@ def display_dashboard_plotly_pydeck():
     with top_container:
         st.subheader("地図表示")
         if deck_chart is not None:
-            st.pydeck_chart(deck_chart)
+            st.pydeck_chart(deck_chart, use_container_width=True)
         else:
             st.info("表示する地図レイヤーがありません。")
     
