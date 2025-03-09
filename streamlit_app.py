@@ -313,10 +313,11 @@ def display_dashboard():
             if file_info.get("source") == "folder":
                 if ext == ".csv":
                     try:
-                        # 可能であれば、既にキャッシュされた preview を利用
-                        df = file_info.get("preview", pd.read_csv(file_info["path"]))
+                        df = file_info["preview"]
                         lat_col = file_info.get("lat_col", "lat")
+                        print(f"lat_col: {lat_col}")
                         lon_col = file_info.get("lon_col", "lon")
+                        print(f"lon_col: {lon_col}")
                         if lat_col in df.columns and lon_col in df.columns:
                             for idx, row in df.iterrows():
                                 folium.Marker(
@@ -342,12 +343,14 @@ def display_dashboard():
             # name があればそれを、なければ URL を使用
             name = file_info.get("name", file_info.get("url", ""))
             ext = os.path.splitext(name)[1].lower()
-            if file_info.get("source", "url") == "url":
+            if file_info.get("source", "") == "url":
                 if ext == ".csv":
                     try:
-                        df = pd.read_csv(file_info["url"])
+                        df = file_info["preview"]
                         lat_col = file_info.get("lat_col", "lat")
+                        print(f"lat_col: {lat_col}")
                         lon_col = file_info.get("lon_col", "lon")
+                        print(f"lon_col: {lon_col}")
                         if lat_col in df.columns and lon_col in df.columns:
                             for idx, row in df.iterrows():
                                 folium.Marker(
@@ -375,9 +378,11 @@ def display_dashboard():
             if file_info.get("source") == "upload":
                 if ext == ".csv":
                     try:
-                        df = pd.read_csv(file_info["file"])
+                        df = file_info["preview"]
                         lat_col = file_info.get("lat_col", "lat")
+                        print(f"lat_col: {lat_col}")
                         lon_col = file_info.get("lon_col", "lon")
+                        print(f"lon_col: {lon_col}")
                         if lat_col in df.columns and lon_col in df.columns:
                             for idx, row in df.iterrows():
                                 folium.Marker(
