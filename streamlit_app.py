@@ -677,7 +677,7 @@ def display_dashboard_plotly_pydeck():
                         df_sample = df.sample(n=10000, random_state=42)
                     else:
                         df_sample = df
-                    st.write(f"file_name: {file_info.get("name", None)}")
+                    st.write(f"file_name: {file_info.get('name', None)}")
                     lat_col = file_info.get("lat_col", "lat")
                     lon_col = file_info.get("lon_col", "lon")
                     st.write(f"lat_col: {lat_col} lon_col: {lon_col}")
