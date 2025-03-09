@@ -14,6 +14,10 @@ import json
 def file_selection_screen():
     st.header("ファイル選択")
 
+    # 全体の再読み込みボタン
+    if st.button("再読み込み"):
+        st.experimental_rerun()
+
     # 1. Inputフォルダからの選択
     # セッション変数 "folder_entries" の初期化（もし存在しなければ）
     if "folder_entries" not in st.session_state:
