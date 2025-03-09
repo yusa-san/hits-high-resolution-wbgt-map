@@ -53,10 +53,10 @@ def file_selection_screen():
                 except Exception as e:
                     st.error(f"CSVプレビュー読み込みエラー ({file_name}): {e}")
                 # テキスト入力でユーザーが変更した値を反映（セッションの初期値として利用）
-                file_info['lat_col'] = st.text_input(f"{file_name} の緯度カラム", value=file_info["lat_col"], key=f"lat_column_{file_name}")
-                st.success(f"{file_name} の緯度カラムを{file_info['lat_col']} に設定しました。")
-                file_info['lon_col'] = st.text_input(f"{file_name} の経度カラム", value=file_info["lon_col"], key=f"lon_column_{file_name}")
-                st.success(f"{file_name} の経度カラムを{file_info['lon_col']} に設定しました。")
+                # file_info['lat_col'] = st.text_input(f"{file_name} の緯度カラム", value=file_info["lat_col"], key=f"lat_column_{file_name}")
+                # st.success(f"{file_name} の緯度カラムを{file_info['lat_col']} に設定しました。")
+                # file_info['lon_col'] = st.text_input(f"{file_name} の経度カラム", value=file_info["lon_col"], key=f"lon_column_{file_name}")
+                # st.success(f"{file_name} の経度カラムを{file_info['lon_col']} に設定しました。")
             elif ext == ".geojson":
                 try:
                     gdf = gpd.read_file(file_info["path"])
