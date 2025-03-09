@@ -675,21 +675,18 @@ def display_dashboard_plotly_pydeck():
         if ext == ".csv":
             try:
                 df = file_info.get("preview", None)
-                # st.write(df.describe()) # debug
+                st.write(f"file_name: {file_info.get('name', None)}")
+                lat_col = file_info.get("lat_col", "lat")
+                lon_col = file_info.get("lon_col", "lon")
+                st.write(f"lat_col: {lat_col} lon_col: {lon_col}")
                 if df is not None:
-                    # 大きなデータの場合はサンプルを抽出（例：10,000行）
-                    df_sample = df
-                    """                 
-                    if len(df) > 10000:
-                        df_sample = df.sample(n=10000, random_state=42)
-                        st.warning(f"{file_name}を10000行にサンプル済み")
+                    st.write(f"count of rows: {df.count}")
+                    # 大きなデータの場合はサンプルを抽出（例：50,000行）
+                    if len(df) > 50000:
+                        df_sample = df.sample(n=50000, random_state=42)
+                        st.warning(f"{file_name}を50000行にサンプル済み")
                     else:
                         df_sample = df
-                    """                    
-                    st.write(f"file_name: {file_info.get('name', None)}")
-                    lat_col = file_info.get("lat_col", "lat")
-                    lon_col = file_info.get("lon_col", "lon")
-                    st.write(f"lat_col: {lat_col} lon_col: {lon_col}")
                 if lat_col in df_sample.columns and lon_col in df_sample.columns:
                     all_lat.extend(df_sample[lat_col].dropna().tolist())
                     all_lon.extend(df_sample[lon_col].dropna().tolist())
@@ -737,14 +734,12 @@ def display_dashboard_plotly_pydeck():
             try:
                 gdf = file_info.get("preview", None)
                 if gdf is not None:
-                    gdf_sample = gdf
-                    """
-                    if len(gdf) > 10000:
-                        gdf_sample = gdf.sample(n=10000, random_state=42)
-                        st.warning(f"{file_name}を10000行にサンプル済み")
+                    st.write(f"count of rows: {gdf.count}")
+                    if len(gdf) > 50000:
+                        gdf_sample = gdf.sample(n=50000, random_state=42)
+                        st.warning(f"{file_name}を50000行にサンプル済み")
                     else:
                         gdf_sample = gdf
-                    """
                     # 属性カラムによる色分け
                     columns_list = gdf_sample.columns
                     color_attr = st.selectbox("Inputフォルダ内のファイル", columns_list)
