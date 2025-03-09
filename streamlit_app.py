@@ -695,7 +695,8 @@ def display_dashboard_plotly_pydeck():
                     all_lon.extend(df_sample[lon_col].dropna().tolist())
                     # 属性カラムによる色分け
                     columns_list = df_sample.columns
-                    color_attr = st.sidebar.selectbox("Inputフォルダ内のファイル", columns_list)
+                    columns_list.extend(None)
+                    color_attr = st.sidebar.selectbox("Inputフォルダ内のファイル", columns_list, format_func=lambda x: "None" if x is None else x)
                     if color_attr and color_attr in df_sample.columns:
                         # プルダウンでカラーマップを選択
                         cmap_choice = st.sidebar.selectbox(
@@ -721,7 +722,7 @@ def display_dashboard_plotly_pydeck():
                     else:
                         get_color_expr = [200,30,0,160]
                     # サイズ
-                    radius = st.sidebar.text_input(f"半径", value=30, key="radius_key")
+                    radius = st.sidebar.text_input(f"半径", value=30, key=f"radius_key_{file_name}")
                     layer = pdk.Layer(
                         "ScatterplotLayer",
                         data=df_sample,
@@ -747,7 +748,8 @@ def display_dashboard_plotly_pydeck():
                         gdf_sample = gdf
                     # 属性カラムによる色分け
                     columns_list = gdf_sample.columns
-                    color_attr = st.sidebar.selectbox("Inputフォルダ内のファイル", columns_list)
+                    columns_list.extend(None)
+                    color_attr = st.sidebar.selectbox("Inputフォルダ内のファイル", columns_list, format_func=lambda x: "None" if x is None else x)
                     if color_attr and color_attr in gdf_sample.columns:
                         # プルダウンでカラーマップを選択
                         cmap_choice = st.sidebar.selectbox(
@@ -770,7 +772,7 @@ def display_dashboard_plotly_pydeck():
                                     # "value" がなければデフォルト色を設定
                                     feature["properties"]["get_color"] = [200, 30, 0, 160]
                     # サイズ
-                    radius = st.sidebar.text_input(f"半径", value=30, key="radius_key")
+                    radius = st.sidebar.text_input(f"半径", value=30, key=f"radius_key_{file_name}")
                     # 座標の中心は gdf の全体境界から計算
                     bounds = gdf_sample.total_bounds  # [minx, miny, maxx, maxy]
                     center_lat = (bounds[1] + bounds[3]) / 2
