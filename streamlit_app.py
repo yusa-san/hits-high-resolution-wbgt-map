@@ -314,9 +314,20 @@ def file_selection_screen():
             st.session_state["upload_entries"].append(file_info)
 
     # 選択されたファイルの一覧
-    if "url_file_info" in st.session_state and st.session_state.url_file_info:
-        st.write("### 選択されたファイル一覧:")
+    st.write("### 選択されたファイル一覧:")
+    if "url_file_info" in st.session_state and st.session_state.url_file_info: # URL入力によるファイル情報
+        st.write("#### URL入力:")
         for file_info in st.session_state.url_file_info:
+            st.write(f"{file_info['name']} ({file_info['source']})")
+            st.write(f"file_info: {file_info}")
+    elif "folder_entries" in st.session_state and st.session_state.folder_entries: # Inputフォルダからのファイル情報
+        st.write("#### Inputフォルダ:")
+        for file_info in st.session_state.folder_entries:
+            st.write(f"{file_info['name']} ({file_info['source']})")
+            st.write(f"file_info: {file_info}")
+    elif "upload_entries" in st.session_state and st.session_state.upload_entries:  #アップロードによるファイル情報
+        st.write("#### アップロード:")
+        for file_info in st.session_state.upload_entries:
             st.write(f"{file_info['name']} ({file_info['source']})")
             st.write(f"file_info: {file_info}")
     else:
