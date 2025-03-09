@@ -128,12 +128,13 @@ def file_selection_screen():
         st.session_state["url_entries"] = [
             {
                 "source": "url",
+                "name": "",
                 "url": "",
                 "loaded": False,
-                "preview": None,
                 "lat_col": "lat",
                 "lon_col": "lon",
                 "band": 1,
+                "preview": None,
             }
         ]
     # 2_URL入力欄とファイル読み込みのロジック # url_entriesリストを順番に処理する
@@ -151,6 +152,7 @@ def file_selection_screen():
             st.session_state["url_entries"][i]["url"] = url_input
             if url_input:
                 file_name = url_input.split("/")[-1]
+                st.session_state["url_entries"][i]["name"] = file_name
                 ext = os.path.splitext(file_name)[1].lower()
                 # 2-1_ファイルの種類毎に読み込み
                 try:
@@ -219,10 +221,10 @@ def file_selection_screen():
                 st.json(preview_data)
             # CSVの場合は緯度経度カラム、TIFFの場合はバンドなどを入力
             if ext == ".csv":
-                lat_col_key = f"lat_column_{i}"
-                lon_col_key = f"lon_column_{i}"
-                lat_default = st.session_state.get(f"lat_column_{i}", "lat")
-                lon_default = st.session_state.get(f"lon_column_{i}", "lon")
+                lat_col_key = f"lat_column_{file_name}"
+                lon_col_key = f"lon_column_{file_name}"
+                lat_default = st.session_state.get(f"lat_column_{file_name}", "lat")
+                lon_default = st.session_state.get(f"lon_column_{file_name}", "lon")
                 st.session_state["url_entries"][i]["lat_col"] = st.text_input(
                     f"{file_name} の緯度カラム", value=lat_default, key=lat_col_key
                 )
@@ -233,8 +235,8 @@ def file_selection_screen():
                 st.success(f"{file_name} の経度カラムを{lon_default} に設定しました。")
 
             elif ext in [".tiff", ".tif"]:
-                band_key = f"band_url_{i}"
-                band_default = st.session_state["url_entries"][i].get("band", 1)
+                band_key = f"band_url_{file_name}"
+                band_default = st.session_state.get(f"band_url_{file_name}", 1)
                 st.session_state["url_entries"][i]["band"] = st.text_input(
                     f"{file_name} の色分け用バンド", value=band_default, key=band_key
                 )
@@ -255,12 +257,13 @@ def file_selection_screen():
             st.session_state["url_entries"].append(
                 {
                     "source": "url",
+                    "name": "",
                     "url": "",
                     "loaded": False,
-                    "preview": None,
                     "lat_col": "lat",
                     "lon_col": "lon",
                     "band": 1,
+                    "preview": None,
                 }
             )
 
@@ -649,15 +652,13 @@ def display_dashboard_plotly_pydeck():
     # すべてのエントリを統合
     all_entries = []
     if "folder_entries" in st.session_state:
-        st.write("folder_entries exist")
         all_entries.extend(st.session_state["folder_entries"])
     if "url_entries" in st.session_state:
-        st.write("url_entries exist")
         all_entries.extend(st.session_state["url_entries"])
     if "upload_entries" in st.session_state:
-        st.write("upload_entries exist")
         all_entries.extend(st.session_state["upload_entries"])
 
+    st.write("all_entries:")
     st.write(all_entries)
     
     # --- Pydeck 用：大容量地理空間ファイルの表示 ---
