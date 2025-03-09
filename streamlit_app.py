@@ -400,9 +400,6 @@ def display_dashboard():
 
 def main():
     st.title("データ表示ダッシュボードアプリ")
-    # セッション変数 "url_file_info" が存在しなければ初期化
-    if "url_file_info" not in st.session_state:
-        st.session_state.url_file_info = []
     
     tab1, tab2 = st.tabs(["ファイル選択", "ダッシュボード表示"])
     
@@ -410,10 +407,10 @@ def main():
         file_selection_screen()
     
     with tab2:
-        if st.session_state.url_file_info:
-            display_dashboard(st.session_state.url_file_info)
-        else:
-            st.warning("まずファイル選択タブでファイルを選択してください。")
+        try:
+            display_dashboard()
+        except Exception as e:
+            st.warning(f"Error: {e}")
 
 if __name__ == "__main__":
     main()
