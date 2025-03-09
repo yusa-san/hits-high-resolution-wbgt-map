@@ -97,14 +97,12 @@ def file_selection_screen():
     # 2_URL入力欄とファイル読み込みのロジック # url_entriesリストを順番に処理する
     for i, entry in enumerate(st.session_state["url_entries"]):
         st.write(f"#### ファイル {i+1} のURL入力")
-
         # URL入力欄
         url_input = st.text_input(
             "URLを入力してください",
             key=f"url_input_{i}",  # キーをユニークに
             value=entry["url"]
         )
-
         # “読み込み”ボタン
         if not entry["loaded"] and st.button("読み込み", key=f"load_url_{i}"):
             # URLをセッションステートにも反映
@@ -161,10 +159,8 @@ def file_selection_screen():
                         else:
                             st.error(f"対応していない拡張子です: {ext}")
                             st.stop()
-
                     # ロード完了フラグ
                     st.session_state["url_entries"][i]["loaded"] = True
-
                 except Exception as e:
                     st.error(f"ファイル読み込みエラー ({file_name}): {e}")
         # 3_既に読み込み済みならプレビュー表示 & カラム指定表示
