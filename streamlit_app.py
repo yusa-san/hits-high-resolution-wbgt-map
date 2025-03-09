@@ -203,11 +203,13 @@ def file_selection_screen():
                 st.session_state["url_entries"][i]["lat_col"] = st.text_input(
                     f"{file_name} の緯度カラム", value=lat_default, key=lat_col_key
                 )
-                st.success(f"{file_name} の緯度カラムを{st.session_state["url_entries"][i]["lat_col"]} に設定しました。")
+                lat_default = st.session_state["url_entries"][i].get("lat_col", "error")
+                st.success(f"{file_name} の緯度カラムを{lat_default} に設定しました。")
                 st.session_state["url_entries"][i]["lon_col"] = st.text_input(
                     f"{file_name} の経度カラム", value=lon_default, key=lon_col_key
                 )
-                st.success(f"{file_name} の経度カラムを{st.session_state["url_entries"][i]["lon_col"]} に設定しました。")
+                lon_default = st.session_state["url_entries"][i].get("lon_col", "lon")
+                st.success(f"{file_name} の経度カラムを{lon_default} に設定しました。")
 
             elif ext in [".tiff", ".tif"]:
                 band_key = f"band_url_{i}"
@@ -215,7 +217,8 @@ def file_selection_screen():
                 st.session_state["url_entries"][i]["band"] = st.text_input(
                     f"{file_name} の色分け用バンド", value=band_default, key=band_key
                 )
-                st.success(f"{file_name} の色分け用バンドを{st.session_state["url_entries"][i]["band"]} に設定しました。")
+                band_default = st.session_state["url_entries"][i].get("band", "error")
+                st.success(f"{file_name} の色分け用バンドを{band_default} に設定しました。")
 
     # -------------------------------------------------------
     # 4. “次のファイル入力”の自動追加
