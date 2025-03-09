@@ -67,24 +67,25 @@ def file_selection_screen():
                 except Exception as e:
                     st.error(f"TIFFメタデータ読み込みエラー ({file_name}): {e}")
                 file_info['band'] = st.text_input(f"{file_name} の色分け用バンド", value=file_info["band"], key=f"band_folder_{file_name}")
-            st.session_state["folder_entries"].append(file_info)
+
+            # file_infoを追加
+            if not any(entry['name'] == file_info['name'] for entry in st.session_state["folder_entries"]):
+                st.session_state["folder_entries"].append(file_info)
+
     else:
         st.info("Inputフォルダが存在しません。")
 
     # 2. URLからの入力
     st.subheader("【2】URLからファイル入力")
 
-    # -------------------------------------------------------
     # 1. セッションステートの初期化
-    # -------------------------------------------------------
-    # ここで複数ファイルの情報を保持するリストを用意する
-    # url: 入力されたURL
-    # loaded: ロード済かどうか (bool)
-    # preview: 読み込んだDataFrame/GeoDataFrame/メタデータなど
-    # lat_col, lon_col, band: カラム設定用（必要に応じて初期値を入れておく）
     if "url_entries" not in st.session_state:
+        # loaded: ロード済かどうか (bool)
+        # preview: 読み込んだDataFrame/GeoDataFrame/メタデータなど
+        # lat_col, lon_col, band: カラム設定用（必要に応じて初期値を入れておく）
         st.session_state["url_entries"] = [
             {
+                "source": "url",
                 "url": "",
                 "loaded": False,
                 "preview": None,
@@ -93,10 +94,7 @@ def file_selection_screen():
                 "band": "1",
             }
         ]
-
-    # -------------------------------------------------------
     # 2. URL入力欄とファイル読み込みのロジック
-    # -------------------------------------------------------
     # url_entriesリストを順番に処理する。最後のURLが読み込み済みの場合、新しいURL入力欄を追加する。
     for i, entry in enumerate(st.session_state["url_entries"]):
         st.write(f"#### ファイル {i+1} のURL入力")
@@ -111,31 +109,27 @@ def file_selection_screen():
         # “読み込み”ボタン
         if not entry["loaded"] and st.button("読み込み", key=f"load_url_{i}"):
             # URLをセッションステートにも反映
-            st.session_state["url_entries"][i]["url"] = url_input
+            if not any(entry['url'] == url_input for entry in st.session_state["url_entries"]):
+                st.session_state["url_entries"][i]["url"] = url_input
             if url_input:
                 file_name = url_input.split("/")[-1]
                 ext = os.path.splitext(file_name)[1].lower()
 
-                # -------------------------------------------------------
                 # 2-1. ファイルの種類毎に読み込み
-                # -------------------------------------------------------
                 try:
                     with st.spinner(f"{file_name} を読み込み中..."):
                         response = requests.get(url_input, stream=True)
-
                         # ステータスコードチェック
                         if response.status_code == 200:
                             st.success(f"{file_name} へのアクセス成功（Status: {response.status_code}）")
                         else:
                             st.error(f"{file_name} へのアクセス拒否（Status: {response.status_code}）")
                         response.raise_for_status()
-
                         # ダウンロード進捗
                         total_size = int(response.headers.get("content-length", 0))
                         data_chunks = []
                         bytes_downloaded = 0
                         chunk_size = 1024
-
                         # ファイルサイズが不明かどうかで処理を分ける
                         if total_size == 0:
                             st.warning("ファイルサイズが不明なため、進捗表示はスキップします。")
@@ -148,10 +142,7 @@ def file_selection_screen():
                                     bytes_downloaded += len(chunk)
                                     progress = int(min(bytes_downloaded / total_size, 1.0) * 100)
                                     progress_bar.progress(progress)
-
-                        # -------------------------------------------------------
                         # 2-2. 取得データの読み込み処理
-                        # -------------------------------------------------------
                         if ext == ".csv":
                             csv_data = b"".join(data_chunks).decode("utf-8")
                             df = pd.read_csv(StringIO(csv_data))
@@ -159,7 +150,6 @@ def file_selection_screen():
                             st.write(f"**{file_name} プレビュー:**")
                             st.dataframe(df.head())
                             st.session_state["url_entries"][i]["preview"] = df
-
                         elif ext == ".geojson":
                             geojson_data = b"".join(data_chunks).decode("utf-8")
                             geojson_dict = json.loads(geojson_data)
@@ -168,7 +158,6 @@ def file_selection_screen():
                             st.write(f"**{file_name} プレビュー:**")
                             st.dataframe(gdf.head())
                             st.session_state["url_entries"][i]["preview"] = gdf
-
                         elif ext in [".tiff", ".tif"]:
                             tiff_data = b"".join(data_chunks)
                             with MemoryFile(tiff_data) as memfile:
@@ -178,11 +167,9 @@ def file_selection_screen():
                             st.write(f"**{file_name} メタデータ:**")
                             st.json(meta)
                             st.session_state["url_entries"][i]["preview"] = meta
-
                         else:
                             st.error(f"対応していない拡張子です: {ext}")
                             st.stop()
-
                     # ロード完了フラグ
                     st.session_state["url_entries"][i]["loaded"] = True
 
@@ -216,12 +203,10 @@ def file_selection_screen():
                 st.session_state["url_entries"][i]["lat_col"] = st.text_input(
                     f"{file_name} の緯度カラム", value=lat_default, key=lat_col_key
                 )
-                lat_default = st.session_state["url_entries"][i].get("lat_col", "error")
                 st.success(f"{file_name} の緯度カラムを{lat_default} に設定しました。")
                 st.session_state["url_entries"][i]["lon_col"] = st.text_input(
                     f"{file_name} の経度カラム", value=lon_default, key=lon_col_key
                 )
-                lon_default = st.session_state["url_entries"][i].get("lon_col", "lon")
                 st.success(f"{file_name} の経度カラムを{lon_default} に設定しました。")
 
             elif ext in [".tiff", ".tif"]:
@@ -250,6 +235,7 @@ def file_selection_screen():
         if not empty_urls:
             st.session_state["url_entries"].append(
                 {
+                    "source": "url",
                     "url": "",
                     "loaded": False,
                     "preview": None,
