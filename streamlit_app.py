@@ -720,12 +720,14 @@ def display_dashboard_plotly_pydeck():
                         get_color_expr = "get_color"
                     else:
                         get_color_expr = [200,30,0,160]
+                    # サイズ
+                    radius = st.sidebar.text_input(f"半径", value=30, key="radius_key")
                     layer = pdk.Layer(
                         "ScatterplotLayer",
                         data=df_sample,
                         get_position=[lon_col, lat_col],
                         get_fill_color=get_color_expr,
-                        get_radius=30,
+                        get_radius=radius,
                     )
                     map_layers.append(layer)
                 else:
@@ -767,6 +769,8 @@ def display_dashboard_plotly_pydeck():
                                 else:
                                     # "value" がなければデフォルト色を設定
                                     feature["properties"]["get_color"] = [200, 30, 0, 160]
+                    # サイズ
+                    radius = st.sidebar.text_input(f"半径", value=30, key="radius_key")
                     # 座標の中心は gdf の全体境界から計算
                     bounds = gdf_sample.total_bounds  # [minx, miny, maxx, maxy]
                     center_lat = (bounds[1] + bounds[3]) / 2
@@ -783,7 +787,7 @@ def display_dashboard_plotly_pydeck():
                         pickable=True,
                         auto_highlight=True,
                         stroked=True,
-                        get_radius=30,
+                        get_radius=radius,
                     )
                     map_layers.append(layer)
                 else:
