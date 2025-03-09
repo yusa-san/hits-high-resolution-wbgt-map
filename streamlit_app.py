@@ -697,7 +697,7 @@ def display_dashboard_plotly_pydeck():
                         # プルダウンでカラーマップを選択
                         cmap_choice = st.selectbox(
                             "カラーマップを選択",
-                            ["Viridis", "Plasma", "Inferno", "Magma", "Cividis"],
+                            ["terrain", "Reds", "Blues", "Greens", "cividis", "magma", "viridis", "twilight", "cool", "coolwarm", "spring", "summer", "autumn", "winter"],
                             key=f"cmap_{file_info.get('name')}"
                         )
                         cmap = cm.get_cmap(cmap_choice)
@@ -746,7 +746,7 @@ def display_dashboard_plotly_pydeck():
                         # プルダウンでカラーマップを選択
                         cmap_choice = st.selectbox(
                             "カラーマップを選択",
-                            ["Viridis", "Plasma", "Inferno", "Magma", "Cividis"],
+                            ["terrain", "Reds", "Blues", "Greens", "cividis", "magma", "viridis", "twilight", "cool", "coolwarm", "spring", "summer", "autumn", "winter"],
                             key=f"cmap_{file_info.get('name')}"
                         )
                         cmap = cm.get_cmap(cmap_choice)
