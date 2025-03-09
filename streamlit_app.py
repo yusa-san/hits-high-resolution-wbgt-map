@@ -670,17 +670,17 @@ def display_dashboard_plotly_pydeck():
         if ext == ".csv":
             try:
                 df = file_info.get("preview", None)
-                st.write(df.describe())
+                # st.write(df.describe()) # debug
                 if df is not None:
                     # 大きなデータの場合はサンプルを抽出（例：10,000行）
                     if len(df) > 10000:
                         df_sample = df.sample(n=10000, random_state=42)
                     else:
                         df_sample = df
+                    st.write(f"file_name: {file_info.get("name", None)}")
                     lat_col = file_info.get("lat_col", "lat")
-                    st.write(lat_col)
                     lon_col = file_info.get("lon_col", "lon")
-                    st.write(lon_col)
+                    st.write(f"lat_col: {lat_col} lon_col: {lon_col}")
                     if lat_col in df_sample.columns and lon_col in df_sample.columns:
                         layer = pdk.Layer(
                             "ScatterplotLayer",
@@ -760,15 +760,18 @@ def display_dashboard_plotly_pydeck():
     else:
         plotly_fig = None
 
-    # --- レイアウト ---
-    col1, col2 = st.columns(2)
-    with col1:
+    # --- 上下レイアウトで表示 ---
+    top_container = st.container()
+    bottom_container = st.container()
+    
+    with top_container:
         st.subheader("大容量ファイルの地図表示 (Pydeck)")
         if deck_chart is not None:
             st.pydeck_chart(deck_chart)
         else:
             st.info("表示する地図レイヤーがありません。")
-    with col2:
+    
+    with bottom_container:
         st.subheader("複数ファイルを組み合わせたグラフ (Plotly)")
         if plotly_fig is not None:
             st.plotly_chart(plotly_fig, use_container_width=True)
