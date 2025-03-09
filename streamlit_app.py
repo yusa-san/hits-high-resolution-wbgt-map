@@ -16,7 +16,7 @@ def file_selection_screen():
 
     # 全体の再読み込みボタン
     if st.button("再読み込み"):
-        st.experimental_rerun()
+        st.rerun()
 
     # 1. Inputフォルダからの選択
     # セッション変数 "folder_entries" の初期化（もし存在しなければ）
