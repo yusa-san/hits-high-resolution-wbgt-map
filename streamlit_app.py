@@ -36,6 +36,7 @@ def file_selection_screen():
                 "source": "folder",
                 "name": file_name,
                 "path": os.path.join(input_folder, file_name),
+                "loaded": False,
                 "lat_col": st.session_state.get(f"lat_column_{file_name}", "lat"),
                 "lon_col": st.session_state.get(f"lon_column_{file_name}", "lon"),
                 "band": st.session_state.get(f"band_folder_{file_name}", 1),
@@ -48,6 +49,7 @@ def file_selection_screen():
                     st.write(f"**{file_name} プレビュー:**")
                     st.dataframe(df.head())
                     file_info["preview"] = df
+                    file_info["loaded"] = True
                 except Exception as e:
                     st.error(f"CSVプレビュー読み込みエラー ({file_name}): {e}")
                 # テキスト入力でユーザーが変更した値を反映（セッションの初期値として利用）
@@ -61,6 +63,7 @@ def file_selection_screen():
                     st.write(f"**{file_name} プレビュー:**")
                     st.dataframe(gdf.head())
                     file_info["preview"] = gdf
+                    file_info["loaded"] = True
                 except Exception as e:
                     st.error(f"GeoJSONプレビュー読み込みエラー ({file_name}): {e}")
             elif ext in [".tiff", ".tif"]:
@@ -70,6 +73,7 @@ def file_selection_screen():
                     st.write(f"**{file_name} メタデータ:**")
                     st.json(meta)
                     file_info["preview"] = meta
+                    file_info["loaded"] = True
                 except Exception as e:
                     st.error(f"TIFFメタデータ読み込みエラー ({file_name}): {e}")
                 file_info['band'] = st.text_input(f"{file_name} の色分け用バンド", value=file_info["band"], key=f"band_folder_{file_name}")
@@ -77,6 +81,40 @@ def file_selection_screen():
             # file_infoを追加
             if not any(entry['name'] == file_info['name'] for entry in st.session_state["folder_entries"]):
                 st.session_state["folder_entries"].append(file_info)
+
+        for i, file_info in enumerate(st.session_state["folder_entries"]):
+            if file_info["loaded"]:
+                file_name = file_info["name"]
+                ext = os.path.splitext(file_name)[1].lower()
+                st.write(f"**{file_name} のプレビュー:**")
+                preview_data = file_info["preview"]
+                if isinstance(preview_data, pd.DataFrame):
+                    st.dataframe(preview_data.head())
+                elif isinstance(preview_data, gpd.GeoDataFrame):
+                    st.dataframe(preview_data.head())
+                else:
+                    st.json(preview_data)
+                # CSVの場合は緯度経度カラム、TIFFの場合はバンドなどを入力
+                if ext == ".csv":
+                    lat_col_key = f"lat_column_{file_name}"
+                    lon_col_key = f"lon_column_{file_name}"
+                    lat_default = st.session_state.get(f"lat_column_{file_name}", "lat")
+                    lon_default = st.session_state.get(f"lon_column_{file_name}", "lon")
+                    st.session_state["folder_entries"][i]["lat_col"] = st.text_input(
+                        f"{file_name} の緯度カラム", value=lat_default, key=lat_col_key
+                    )
+                    st.success(f"{file_name} の緯度カラムを{lat_default} に設定しました。")
+                    st.session_state["folder_entries"][i]["lon_col"] = st.text_input(
+                        f"{file_name} の経度カラム", value=lon_default, key=lon_col_key
+                    )
+                    st.success(f"{file_name} の経度カラムを{lon_default} に設定しました。")
+                elif ext in [".tiff", ".tif"]:
+                    band_key = f"band_folder_{file_name}"
+                    band_default = st.session_state.get(f"band_folder_{file_name}", 1)
+                    st.session_state["folder_entries"][i]["band"] = st.text_input(
+                        f"{file_name} の色分け用バンド", value=band_default, key=band_key
+                    )
+                    st.success(f"{file_name} の色分け用バンドを{band_default} に設定しました。")
 
     else:
         st.info("Inputフォルダが存在しません。")
