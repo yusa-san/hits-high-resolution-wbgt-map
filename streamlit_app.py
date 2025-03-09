@@ -13,6 +13,7 @@ import json
 import plotly.express as px
 import plotly.graph_objects as go
 import pydeck as pdk
+import numpy as np
 
 def file_selection_screen():
     st.header("ファイル選択")
@@ -662,9 +663,12 @@ def display_dashboard_plotly_pydeck():
     
     # --- Pydeck 用：大容量地理空間ファイルの表示 ---
     map_layers = []
+    all_lat = []
+    all_lon = []
     # CSV・GeoJSON で、緯度・経度の情報が存在するものを対象とする
     for file_info in all_entries:
-        ext = os.path.splitext(file_info.get("name", ""))[1].lower()
+        file_name = file_info.get("name", "")
+        ext = os.path.splitext(file_name)[1].lower()
         # CSVの場合：プレビューは file_info["preview"]（サンプリング済みであることを想定）
         if ext == ".csv":
             try:
@@ -674,58 +678,94 @@ def display_dashboard_plotly_pydeck():
                     # 大きなデータの場合はサンプルを抽出（例：10,000行）
                     if len(df) > 10000:
                         df_sample = df.sample(n=10000, random_state=42)
+                        st.warning(f"{file_name}を10000行にサンプル済み")
                     else:
                         df_sample = df
                     st.write(f"file_name: {file_info.get('name', None)}")
                     lat_col = file_info.get("lat_col", "lat")
                     lon_col = file_info.get("lon_col", "lon")
                     st.write(f"lat_col: {lat_col} lon_col: {lon_col}")
-                    if lat_col in df_sample.columns and lon_col in df_sample.columns:
-                        layer = pdk.Layer(
-                            "ScatterplotLayer",
-                            data=df_sample,
-                            get_position=[lon_col, lat_col],
-                            get_color="[200, 30, 0, 160]",
-                            get_radius=100,
-                        )
-                        map_layers.append(layer)
+                if lat_col in df_sample.columns and lon_col in df_sample.columns:
+                    all_lat.extend(df_sample[lat_col].dropna().tolist())
+                    all_lon.extend(df_sample[lon_col].dropna().tolist())
+                    # 属性カラムによる色分け
+                    columns_list = df_sample.columns
+                    color_attr = st.select("Inputフォルダ内のファイル", columns_list)
+                    if color_attr and color_attr in df_sample.columns:
+                        unique_vals = df_sample[color_attr].unique()
+                        np.random.seed(42)
+                        # パレット: 各ユニークな属性値に対し RGB (0-255) + alpha
+                        palette = {val: [int(x) for x in np.random.randint(0, 256, size=3).tolist()] + [160] for val in unique_vals}
+                        df_sample["get_color"] = df_sample[color_attr].apply(lambda x: palette.get(x, [200,30,0,160]))
+                        get_color_expr = "get_color"
                     else:
-                        st.warning(f"CSVファイル {file_info.get('name')} に指定された緯度/経度カラムが見つかりません。")
+                        get_color_expr = [200,30,0,160]
+                    layer = pdk.Layer(
+                        "ScatterplotLayer",
+                        data=df_sample,
+                        get_position=[lon_col, lat_col],
+                        get_fill_color=get_color_expr,
+                        get_radius=100,
+                    )
+                    map_layers.append(layer)
+                else:
+                    st.warning(f"CSVファイル {file_name} に指定された緯度/経度カラムが見つかりません。")
             except Exception as e:
-                st.error(f"CSVファイル {file_info.get('name')} のマップレイヤー生成エラー: {e}")
+                st.error(f"CSVファイル {file_name} のマップレイヤー生成エラー: {e}")
         # GeoJSONの場合
         elif ext == ".geojson":
             try:
                 gdf = file_info.get("preview", None)
-                if gdf is None:
-                    # もし preview が無いなら読み込みを試みる
-                    gdf = gpd.read_file(file_info.get("path", file_info.get("url")))
                 if gdf is not None:
                     if len(gdf) > 10000:
                         gdf_sample = gdf.sample(n=10000, random_state=42)
+                        st.warning(f"{file_name}を10000行にサンプル済み")
                     else:
                         gdf_sample = gdf
+                    # 座標の中心は gdf の全体境界から計算
+                    bounds = gdf_sample.total_bounds  # [minx, miny, maxx, maxy]
+                    center_lat = (bounds[1] + bounds[3]) / 2
+                    center_lon = (bounds[0] + bounds[2]) / 2
+                    all_lat.append(center_lat)
+                    all_lon.append(center_lon)
                     geojson_data = gdf_sample.__geo_interface__
                     layer = pdk.Layer(
                         "GeoJsonLayer",
                         data=geojson_data,
-                        get_fill_color="[180, 0, 200, 140]",
+                        get_fill_color=[180, 0, 200, 140],
                         get_line_color=[255, 255, 255],
                         line_width_min_pixels=1,
                     )
                     map_layers.append(layer)
+                else:
+                    st.warning(f"GeoJSONファイル {file_name} の読み込みに失敗しました。")
             except Exception as e:
-                st.error(f"GeoJSONファイル {file_info.get('name')} のマップレイヤー生成エラー: {e}")
-        # TIFFは現状対象外
+                st.error(f"GeoJSONファイル {file_name} のマップレイヤー生成エラー: {e}")
         elif ext in [".tiff", ".tif"]:
-            st.info(f"TIFFファイル {file_info.get('name')} はマップ表示対象外です。")
+            st.info(f"TIFFファイル {file_name} はマップ表示対象外です。")
     
+    # 自動で中心とズームレベルを設定
+    if all_lat and all_lon:
+        center_lat = sum(all_lat) / len(all_lat)
+        center_lon = sum(all_lon) / len(all_lon)
+        lat_extent = max(all_lat) - min(all_lat)
+        lon_extent = max(all_lon) - min(all_lon)
+        extent = max(lat_extent, lon_extent)
+        if extent < 0.1:
+            zoom_level = 15
+        elif extent < 1:
+            zoom_level = 10
+        else:
+            zoom_level = 5
+    else:
+        center_lat, center_lon, zoom_level = 36, 138, 5
+
     if map_layers:
         deck_chart = pdk.Deck(
             initial_view_state=pdk.ViewState(
-                latitude=36,
-                longitude=138,
-                zoom=5,
+                latitude=center_lat,
+                longitude=center_lon,
+                zoom=zoom_level,
             ),
             layers=map_layers,
             map_style="mapbox://styles/mapbox/light-v9",
