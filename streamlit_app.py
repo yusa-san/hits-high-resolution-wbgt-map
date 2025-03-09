@@ -657,6 +657,8 @@ def display_dashboard_plotly_pydeck():
     if "upload_entries" in st.session_state:
         st.write("upload_entries exist")
         all_entries.extend(st.session_state["upload_entries"])
+
+    st.write(all_entries)
     
     # --- Pydeck 用：大容量地理空間ファイルの表示 ---
     map_layers = []
