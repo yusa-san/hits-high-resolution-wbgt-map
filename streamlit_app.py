@@ -649,10 +649,13 @@ def display_dashboard_plotly_pydeck():
     # すべてのエントリを統合
     all_entries = []
     if "folder_entries" in st.session_state:
+        st.write("folder_entries exist")
         all_entries.extend(st.session_state["folder_entries"])
     if "url_entries" in st.session_state:
+        st.write("url_entries exist")
         all_entries.extend(st.session_state["url_entries"])
     if "upload_entries" in st.session_state:
+        st.write("upload_entries exist")
         all_entries.extend(st.session_state["upload_entries"])
     
     # --- Pydeck 用：大容量地理空間ファイルの表示 ---
@@ -664,6 +667,7 @@ def display_dashboard_plotly_pydeck():
         if ext == ".csv":
             try:
                 df = file_info.get("preview", None)
+                st.write(df.describe())
                 if df is not None:
                     # 大きなデータの場合はサンプルを抽出（例：10,000行）
                     if len(df) > 10000:
@@ -671,7 +675,9 @@ def display_dashboard_plotly_pydeck():
                     else:
                         df_sample = df
                     lat_col = file_info.get("lat_col", "lat")
+                    st.write(lat_col)
                     lon_col = file_info.get("lon_col", "lon")
+                    st.write(lon_col)
                     if lat_col in df_sample.columns and lon_col in df_sample.columns:
                         layer = pdk.Layer(
                             "ScatterplotLayer",
