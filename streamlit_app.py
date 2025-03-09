@@ -647,7 +647,6 @@ def display_dashboard_plotly():
 
 def display_dashboard_plotly_pydeck():
     st.header("ダッシュボード表示画面")
-    st.write("以下に、大容量ファイルの地図表示と複数ファイルを組み合わせたグラフを表示します。")
     
     # すべてのエントリを統合
     all_entries = []
@@ -765,14 +764,14 @@ def display_dashboard_plotly_pydeck():
     bottom_container = st.container()
     
     with top_container:
-        st.subheader("大容量ファイルの地図表示 (Pydeck)")
+        st.subheader("地図表示")
         if deck_chart is not None:
             st.pydeck_chart(deck_chart)
         else:
             st.info("表示する地図レイヤーがありません。")
     
     with bottom_container:
-        st.subheader("複数ファイルを組み合わせたグラフ (Plotly)")
+        st.subheader("グラフ")
         if plotly_fig is not None:
             st.plotly_chart(plotly_fig, use_container_width=True)
         else:
