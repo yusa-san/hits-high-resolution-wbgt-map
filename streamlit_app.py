@@ -690,7 +690,7 @@ def display_dashboard_plotly_pydeck():
                     all_lon.extend(df_sample[lon_col].dropna().tolist())
                     # 属性カラムによる色分け
                     columns_list = df_sample.columns
-                    color_attr = st.select("Inputフォルダ内のファイル", columns_list)
+                    color_attr = st.selectbox("Inputフォルダ内のファイル", columns_list)
                     if color_attr and color_attr in df_sample.columns:
                         unique_vals = df_sample[color_attr].unique()
                         np.random.seed(42)
@@ -722,6 +722,9 @@ def display_dashboard_plotly_pydeck():
                         st.warning(f"{file_name}を10000行にサンプル済み")
                     else:
                         gdf_sample = gdf
+                    # 属性カラムによる色分け
+                    columns_list = gdf_sample.columns
+                    color_attr = st.selectbox("Inputフォルダ内のファイル", columns_list)
                     # 座標の中心は gdf の全体境界から計算
                     bounds = gdf_sample.total_bounds  # [minx, miny, maxx, maxy]
                     center_lat = (bounds[1] + bounds[3]) / 2
