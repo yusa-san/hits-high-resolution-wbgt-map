@@ -296,105 +296,106 @@ def file_selection_screen():
             st.write(f"{file_info.get('name', 'error:name')} ({file_info.get('source', 'error:source')})")
             st.write(f"file_info: {file_info}")
 
-def display_dashboard(selected_files):
+def display_dashboard():
     st.header("ダッシュボード表示画面")
     st.write("以下の地図上に、選択されたデータを表示します。")
     
     # foliumで地図を初期化（例：日本付近を中心に表示）
     m = folium.Map(location=[36, 138], zoom_start=5)
     
-    # 選択された各ファイルについて処理
-    for file_info in selected_files:
-        name = file_info["name"]
-        ext = os.path.splitext(name)[1].lower()
-        
-        if file_info["source"] == "folder":
-            file_path = file_info["path"]
-            if ext == ".csv":
-                try:
-                    df = pd.read_csv(file_path)
-                    # file_infoで指定された緯度・経度カラムを取得（デフォルトは"lat", "lon"）
-                    lat_col = file_info.get('lat_col', 'lat')
-                    lon_col = file_info.get('lon_col', 'lon')
-                    if lat_col in df.columns and lon_col in df.columns:
-                        for idx, row in df.iterrows():
-                            folium.Marker(
-                                location=[row[lat_col], row[lon_col]],
-                                popup=f"{name}: {row.to_dict()}"
-                            ).add_to(m)
-                    else:
-                        st.warning(f"CSVファイル {name} に指定された緯度カラム '{lat_col}' と経度カラム '{lon_col}' が見つかりません。")
-                except Exception as e:
-                    st.error(f"CSVファイル {name} の読み込みエラー: {e}")
-            elif ext == ".geojson":
-                try:
-                    gdf = gpd.read_file(file_path)
-                    folium.GeoJson(gdf).add_to(m)
-                except Exception as e:
-                    st.error(f"GeoJSONファイル {name} の読み込みエラー: {e}")
-            elif ext in [".tiff", ".tif"]:
-                st.info(f"TIFFファイル {name} の地図上へのオーバーレイは現状実装されていません。")
-        
-        elif file_info["source"] == "url":
-            url = file_info["url"]
-            if ext == ".csv":
-                try:
-                    df = pd.read_csv(url)
-                    # file_infoで指定された緯度・経度カラムを取得（デフォルトは"lat", "lon"）
-                    lat_col = file_info.get('lat_col', 'lat')
-                    lon_col = file_info.get('lon_col', 'lon')
-                    if lat_col in df.columns and lon_col in df.columns:
-                        for idx, row in df.iterrows():
-                            folium.Marker(
-                                location=[row[lat_col], row[lon_col]],
-                                popup=f"{name}: {row.to_dict()}"
-                            ).add_to(m)
-                    else:
-                        st.warning(f"CSVファイル {name} に指定された緯度カラム '{lat_col}' と経度カラム '{lon_col}' が見つかりません。")
-                except Exception as e:
-                    st.error(f"CSV URL {url} の読み込みエラー: {e}")
-                    
-            elif ext == ".geojson":
-                try:
-                    gdf = gpd.read_file(url)
-                    folium.GeoJson(gdf).add_to(m)
-                except Exception as e:
-                    st.error(f"GeoJSON URL {url} の読み込みエラー: {e}")
-                    
-            elif ext in [".tiff", ".tif"]:
-                st.info(f"TIFFファイル {name} の地図上へのオーバーレイは現状実装されていません。")
-        
-        elif file_info["source"] == "upload":
-            if ext == ".csv":
-                try:
-                    df = pd.read_csv(file_info["file"])
-                    # file_infoで指定された緯度・経度カラムを取得（デフォルトは"lat", "lon"）
-                    lat_col = file_info.get('lat_col', 'lat')
-                    lon_col = file_info.get('lon_col', 'lon')
-                    if lat_col in df.columns and lon_col in df.columns:
-                        for idx, row in df.iterrows():
-                            folium.Marker(
-                                location=[row[lat_col], row[lon_col]],
-                                popup=f"{name}: {row.to_dict()}"
-                            ).add_to(m)
-                    else:
-                        st.warning(f"CSVファイル {name} に指定された緯度カラム '{lat_col}' と経度カラム '{lon_col}' が見つかりません。")
-                except Exception as e:
-                    st.error(f"アップロードCSVファイル {name} の読み込みエラー: {e}")
-                    
-            elif ext == ".geojson":
-                try:
-                    # ファイルポインタを先頭に戻す
-                    file_info["file"].seek(0)
-                    gdf = gpd.read_file(file_info["file"])
-                    folium.GeoJson(gdf).add_to(m)
-                except Exception as e:
-                    st.error(f"アップロードGeoJSONファイル {name} の読み込みエラー: {e}")
-                    
-            elif ext in [".tiff", ".tif"]:
-                st.info(f"アップロードされたTIFFファイル {name} の地図上へのオーバーレイは現状実装されていません。")
+    # 1. Inputフォルダからのファイル情報 (st.session_state["folder_entries"])
+    if "folder_entries" in st.session_state:
+        for file_info in st.session_state["folder_entries"]:
+            name = file_info["name"]
+            ext = os.path.splitext(name)[1].lower()
+            if file_info.get("source") == "folder":
+                if ext == ".csv":
+                    try:
+                        # 可能であれば、既にキャッシュされた preview を利用
+                        df = file_info.get("preview", pd.read_csv(file_info["path"]))
+                        lat_col = file_info.get("lat_col", "lat")
+                        lon_col = file_info.get("lon_col", "lon")
+                        if lat_col in df.columns and lon_col in df.columns:
+                            for idx, row in df.iterrows():
+                                folium.Marker(
+                                    location=[row[lat_col], row[lon_col]],
+                                    popup=f"{name}: {row.to_dict()}"
+                                ).add_to(m)
+                        else:
+                            st.warning(f"CSVファイル {name} に指定された緯度カラム '{lat_col}' と経度カラム '{lon_col}' が見つかりません。")
+                    except Exception as e:
+                        st.error(f"CSVファイル {name} の読み込みエラー: {e}")
+                elif ext == ".geojson":
+                    try:
+                        gdf = gpd.read_file(file_info["path"])
+                        folium.GeoJson(gdf).add_to(m)
+                    except Exception as e:
+                        st.error(f"GeoJSONファイル {name} の読み込みエラー: {e}")
+                elif ext in [".tiff", ".tif"]:
+                    st.info(f"TIFFファイル {name} の地図上へのオーバーレイは現状実装されていません。")
+
+    # 2. URL入力によるファイル情報 (st.session_state["url_entries"])
+    if "url_entries" in st.session_state:
+        for file_info in st.session_state["url_entries"]:
+            # name があればそれを、なければ URL を使用
+            name = file_info.get("name", file_info.get("url", ""))
+            ext = os.path.splitext(name)[1].lower()
+            if file_info.get("source", "url") == "url":
+                if ext == ".csv":
+                    try:
+                        df = pd.read_csv(file_info["url"])
+                        lat_col = file_info.get("lat_col", "lat")
+                        lon_col = file_info.get("lon_col", "lon")
+                        if lat_col in df.columns and lon_col in df.columns:
+                            for idx, row in df.iterrows():
+                                folium.Marker(
+                                    location=[row[lat_col], row[lon_col]],
+                                    popup=f"{name}: {row.to_dict()}"
+                                ).add_to(m)
+                        else:
+                            st.warning(f"CSVファイル {name} に指定された緯度カラム '{lat_col}' と経度カラム '{lon_col}' が見つかりません。")
+                    except Exception as e:
+                        st.error(f"CSV URL {file_info['url']} の読み込みエラー: {e}")
+                elif ext == ".geojson":
+                    try:
+                        gdf = gpd.read_file(file_info["url"])
+                        folium.GeoJson(gdf).add_to(m)
+                    except Exception as e:
+                        st.error(f"GeoJSON URL {file_info['url']} の読み込みエラー: {e}")
+                elif ext in [".tiff", ".tif"]:
+                    st.info(f"TIFFファイル {name} の地図上へのオーバーレイは現状実装されていません。")
     
-    # 地図を表示
+    # 3. アップロードされたファイル情報 (st.session_state["upload_entries"])
+    if "upload_entries" in st.session_state:
+        for file_info in st.session_state["upload_entries"]:
+            name = file_info["name"]
+            ext = os.path.splitext(name)[1].lower()
+            if file_info.get("source") == "upload":
+                if ext == ".csv":
+                    try:
+                        df = pd.read_csv(file_info["file"])
+                        lat_col = file_info.get("lat_col", "lat")
+                        lon_col = file_info.get("lon_col", "lon")
+                        if lat_col in df.columns and lon_col in df.columns:
+                            for idx, row in df.iterrows():
+                                folium.Marker(
+                                    location=[row[lat_col], row[lon_col]],
+                                    popup=f"{name}: {row.to_dict()}"
+                                ).add_to(m)
+                        else:
+                            st.warning(f"CSVファイル {name} に指定された緯度カラム '{lat_col}' と経度カラム '{lon_col}' が見つかりません。")
+                    except Exception as e:
+                        st.error(f"アップロードCSVファイル {name} の読み込みエラー: {e}")
+                elif ext == ".geojson":
+                    try:
+                        file_info["file"].seek(0)
+                        gdf = gpd.read_file(file_info["file"])
+                        folium.GeoJson(gdf).add_to(m)
+                    except Exception as e:
+                        st.error(f"アップロードGeoJSONファイル {name} の読み込みエラー: {e}")
+                elif ext in [".tiff", ".tif"]:
+                    st.info(f"アップロードされたTIFFファイル {name} の地図上へのオーバーレイは現状実装されていません。")
+    
     st_folium(m)
 
 def main():
