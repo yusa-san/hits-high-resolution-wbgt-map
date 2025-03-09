@@ -10,3 +10,4 @@ geopandas
 rasterio
 folium
 plotly
+pydeck

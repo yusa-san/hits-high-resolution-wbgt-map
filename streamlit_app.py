@@ -12,6 +12,7 @@ from io import StringIO
 import json
 import plotly.express as px
 import plotly.graph_objects as go
+import pydeck as pdk
 
 def file_selection_screen():
     st.header("ファイル選択")
@@ -641,6 +642,130 @@ def display_dashboard_plotly():
     
     st.plotly_chart(fig, use_container_width=True)
 
+def display_dashboard_plotly_pydeck():
+    st.header("ダッシュボード表示画面")
+    st.write("以下に、大容量ファイルの地図表示と複数ファイルを組み合わせたグラフを表示します。")
+    
+    # すべてのエントリを統合
+    all_entries = []
+    if "folder_entries" in st.session_state:
+        all_entries.extend(st.session_state["folder_entries"])
+    if "url_entries" in st.session_state:
+        all_entries.extend(st.session_state["url_entries"])
+    if "upload_entries" in st.session_state:
+        all_entries.extend(st.session_state["upload_entries"])
+    
+    # --- Pydeck 用：大容量地理空間ファイルの表示 ---
+    map_layers = []
+    # CSV・GeoJSON で、緯度・経度の情報が存在するものを対象とする
+    for file_info in all_entries:
+        ext = os.path.splitext(file_info.get("name", ""))[1].lower()
+        # CSVの場合：プレビューは file_info["preview"]（サンプリング済みであることを想定）
+        if ext == ".csv":
+            try:
+                df = file_info.get("preview", None)
+                if df is not None:
+                    # 大きなデータの場合はサンプルを抽出（例：10,000行）
+                    if len(df) > 10000:
+                        df_sample = df.sample(n=10000, random_state=42)
+                    else:
+                        df_sample = df
+                    lat_col = file_info.get("lat_col", "lat")
+                    lon_col = file_info.get("lon_col", "lon")
+                    if lat_col in df_sample.columns and lon_col in df_sample.columns:
+                        layer = pdk.Layer(
+                            "ScatterplotLayer",
+                            data=df_sample,
+                            get_position=[lon_col, lat_col],
+                            get_color="[200, 30, 0, 160]",
+                            get_radius=100,
+                        )
+                        map_layers.append(layer)
+                    else:
+                        st.warning(f"CSVファイル {file_info.get('name')} に指定された緯度/経度カラムが見つかりません。")
+            except Exception as e:
+                st.error(f"CSVファイル {file_info.get('name')} のマップレイヤー生成エラー: {e}")
+        # GeoJSONの場合
+        elif ext == ".geojson":
+            try:
+                gdf = file_info.get("preview", None)
+                if gdf is None:
+                    # もし preview が無いなら読み込みを試みる
+                    gdf = gpd.read_file(file_info.get("path", file_info.get("url")))
+                if gdf is not None:
+                    if len(gdf) > 10000:
+                        gdf_sample = gdf.sample(n=10000, random_state=42)
+                    else:
+                        gdf_sample = gdf
+                    geojson_data = gdf_sample.__geo_interface__
+                    layer = pdk.Layer(
+                        "GeoJsonLayer",
+                        data=geojson_data,
+                        get_fill_color="[180, 0, 200, 140]",
+                        get_line_color=[255, 255, 255],
+                        line_width_min_pixels=1,
+                    )
+                    map_layers.append(layer)
+            except Exception as e:
+                st.error(f"GeoJSONファイル {file_info.get('name')} のマップレイヤー生成エラー: {e}")
+        # TIFFは現状対象外
+        elif ext in [".tiff", ".tif"]:
+            st.info(f"TIFFファイル {file_info.get('name')} はマップ表示対象外です。")
+    
+    if map_layers:
+        deck_chart = pdk.Deck(
+            initial_view_state=pdk.ViewState(
+                latitude=36,
+                longitude=138,
+                zoom=5,
+            ),
+            layers=map_layers,
+            map_style="mapbox://styles/mapbox/light-v9",
+        )
+    else:
+        deck_chart = None
+
+    # --- Plotly 用：複数ファイルのグラフ作成 ---
+    # ここでは例として、各CSVファイルに "x" と "y" 列があると仮定し、散布図を作成
+    combined_df_list = []
+    for file_info in all_entries:
+        ext = os.path.splitext(file_info.get("name", ""))[1].lower()
+        if ext == ".csv":
+            try:
+                df = file_info.get("preview", None)
+                if df is not None and "x" in df.columns and "y" in df.columns:
+                    df_temp = df.copy()
+                    df_temp["source_file"] = file_info.get("name", "unknown")
+                    combined_df_list.append(df_temp)
+            except Exception as e:
+                st.error(f"CSVファイル {file_info.get('name')} のグラフ用データ読み込みエラー: {e}")
+    if combined_df_list:
+        combined_df = pd.concat(combined_df_list)
+        plotly_fig = px.scatter(
+            combined_df,
+            x="x",
+            y="y",
+            color="source_file",
+            title="複数ファイルの散布図"
+        )
+    else:
+        plotly_fig = None
+
+    # --- レイアウト ---
+    col1, col2 = st.columns(2)
+    with col1:
+        st.subheader("大容量ファイルの地図表示 (Pydeck)")
+        if deck_chart is not None:
+            st.pydeck_chart(deck_chart)
+        else:
+            st.info("表示する地図レイヤーがありません。")
+    with col2:
+        st.subheader("複数ファイルを組み合わせたグラフ (Plotly)")
+        if plotly_fig is not None:
+            st.plotly_chart(plotly_fig, use_container_width=True)
+        else:
+            st.info("表示するグラフデータがありません。")
+
 def main():
     st.title("データ表示ダッシュボードアプリ")
     
@@ -651,7 +776,7 @@ def main():
     
     with tab2:
         try:
-            display_dashboard_plotly()
+            display_dashboard_plotly_pydeck()
         except Exception as e:
             st.warning(f"Error: {e}")
 
