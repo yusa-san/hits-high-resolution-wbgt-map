@@ -34,7 +34,7 @@ def file_selection_screen():
                 "path": os.path.join(input_folder, file_name),
                 "lat_col": st.session_state.get(f"lat_column_{file_name}", "lat"),
                 "lon_col": st.session_state.get(f"lon_column_{file_name}", "lon"),
-                "band": st.session_state.get(f"band_folder_{file_name}", "1"),
+                "band": st.session_state.get(f"band_folder_{file_name}", 1),
                 "preview": None,
             }
             ext = os.path.splitext(file_name)[1].lower()
@@ -226,7 +226,7 @@ def file_selection_screen():
 
             elif ext in [".tiff", ".tif"]:
                 band_key = f"band_url_{i}"
-                band_default = st.session_state["url_entries"][i].get("band", "1")
+                band_default = st.session_state["url_entries"][i].get("band", 1)
                 st.session_state["url_entries"][i]["band"] = st.text_input(
                     f"{file_name} の色分け用バンド", value=band_default, key=band_key
                 )
@@ -255,7 +255,7 @@ def file_selection_screen():
                     "preview": None,
                     "lat_col": "lat",
                     "lon_col": "lon",
-                    "band": "1",
+                    "band": 1,
                 }
             )
 
@@ -276,7 +276,7 @@ def file_selection_screen():
                 "file": uploaded_file,
                 "lat_col": st.session_state.get(f"lat_column_{file_name}", "lat"),
                 "lon_col": st.session_state.get(f"lon_column_{file_name}", "lon"),
-                "band": st.session_state.get(f"band_upload_{file_name}", "1"),
+                "band": st.session_state.get(f"band_upload_{file_name}", 1),
                 "preview": None,
             }
             ext = os.path.splitext(file_name)[1].lower()
