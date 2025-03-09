@@ -315,10 +315,11 @@ def file_selection_screen():
 
     # 選択されたファイルの一覧
     st.write("### 選択されたファイル一覧:")
-    if "url_file_info" in st.session_state and st.session_state.url_file_info: # URL入力によるファイル情報
+    if "url_entries" in st.session_state and st.session_state.url_entries: # URL入力によるファイル情報
         st.write("#### URL入力:")
-        for file_info in st.session_state.url_file_info:
-            st.write(f"{file_info['name']} ({file_info['source']})")
+        for file_info in st.session_state["url_entries"]:
+            name = file_info.get("name", file_info.get("url", "")) # file_info に "name" があればそれを、なければ "url" を表示
+            st.write(f"{name} ({file_info['source']})")
             st.write(f"file_info: {file_info}")
     elif "folder_entries" in st.session_state and st.session_state.folder_entries: # Inputフォルダからのファイル情報
         st.write("#### Inputフォルダ:")
