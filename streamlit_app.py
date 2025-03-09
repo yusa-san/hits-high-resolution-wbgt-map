@@ -80,14 +80,12 @@ def file_selection_screen():
 
     # 1. セッションステートの初期化
     if "url_entries" not in st.session_state:
-        # loaded: ロード済かどうか (bool)
-        # preview: 読み込んだDataFrame/GeoDataFrame/メタデータなど
-        # lat_col, lon_col, band: カラム設定用（必要に応じて初期値を入れておく）
+        # ループをスタートするためのダミー
         st.session_state["url_entries"] = [
             {
                 "source": "url",
                 "url": "",
-                "loaded": False,
+                "loaded": True,
                 "preview": None,
                 "lat_col": "lat",
                 "lon_col": "lon",
@@ -96,9 +94,20 @@ def file_selection_screen():
         ]
 
     # 2. URL入力欄とファイル読み込みのロジック
-    # url_entriesリストを順番に処理する。最後のURLが読み込み済みの場合、新しいURL入力欄を追加する。
+    # url_entriesリストを順番に処理する
     for i, entry in enumerate(st.session_state["url_entries"]):
         st.write(f"#### ファイル {i+1} のURL入力")
+
+        # file_infoの初期値
+        file_info = {
+            "source": "url",
+            "url": "",
+            "loaded": False,
+            "preview": None,
+            "lat_col": "lat",
+            "lon_col": "lon",
+            "band": "1",
+        }
 
         # URL入力欄
         url_input = st.text_input(
@@ -109,7 +118,7 @@ def file_selection_screen():
 
         # “読み込み”ボタン
         if not entry["loaded"] and st.button("読み込み", key=f"load_url_{i}"):
-            file_info["url"] = url_input
+            file_info['url'] = url_input
             if url_input:
                 file_name = url_input.split("/")[-1]
                 ext = os.path.splitext(file_name)[1].lower()
@@ -174,7 +183,7 @@ def file_selection_screen():
                     st.error(f"ファイル読み込みエラー ({file_name}): {e}")
 
         # 3. 既に読み込み済みならプレビュー表示 & カラム指定表示
-        if entry["loaded"]:
+        if entry["loaded"] and not entry["url"] == "":
             file_name = entry["url"].split("/")[-1]
             ext = os.path.splitext(file_name)[1].lower()
             st.write(f"**{file_name} のプレビュー:**")
