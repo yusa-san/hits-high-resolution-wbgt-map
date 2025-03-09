@@ -6,6 +6,8 @@ import requests
 import rasterio
 from rasterio.io import MemoryFile
 import matplotlib.pyplot as plt
+import matplotlib.cm as cm
+import matplotlib.colors as mcolors
 import folium
 from streamlit_folium import st_folium
 from io import StringIO
@@ -692,11 +694,26 @@ def display_dashboard_plotly_pydeck():
                     columns_list = df_sample.columns
                     color_attr = st.selectbox("Inputフォルダ内のファイル", columns_list)
                     if color_attr and color_attr in df_sample.columns:
+                        # プルダウンでカラーマップを選択
+                        cmap_choice = st.selectbox(
+                            "カラーマップを選択",
+                            ["Viridis", "Plasma", "Inferno", "Magma", "Cividis"],
+                            key=f"cmap_{file_info.get('name')}"
+                        )
+                        cmap = cm.get_cmap(cmap_choice)
                         unique_vals = df_sample[color_attr].unique()
-                        np.random.seed(42)
-                        # パレット: 各ユニークな属性値に対し RGB (0-255) + alpha
-                        palette = {val: [int(x) for x in np.random.randint(0, 256, size=3).tolist()] + [160] for val in unique_vals}
-                        df_sample["get_color"] = df_sample[color_attr].apply(lambda x: palette.get(x, [200,30,0,160]))
+                        if np.issubdtype(unique_vals.dtype, np.number):
+                            norm = mcolors.Normalize(vmin=unique_vals.min(), vmax=unique_vals.max())
+                            df_sample["get_color"] = df_sample[color_attr].apply(
+                                lambda x: [int(c*255) for c in cmap(norm(x))[:3]] + [160]
+                            )
+                        else:
+                            categories = sorted(unique_vals)
+                            n = len(categories)
+                            mapping = {cat: cmap(i/(n-1) if n>1 else 0.5) for i, cat in enumerate(categories)}
+                            df_sample["get_color"] = df_sample[color_attr].apply(
+                                lambda x: [int(c*255) for c in mapping[x][:3]] + [160]
+                            )
                         get_color_expr = "get_color"
                     else:
                         get_color_expr = [200,30,0,160]
@@ -725,6 +742,27 @@ def display_dashboard_plotly_pydeck():
                     # 属性カラムによる色分け
                     columns_list = gdf_sample.columns
                     color_attr = st.selectbox("Inputフォルダ内のファイル", columns_list)
+                    if color_attr and color_attr in gdf_sample.columns:
+                        # プルダウンでカラーマップを選択
+                        cmap_choice = st.selectbox(
+                            "カラーマップを選択",
+                            ["Viridis", "Plasma", "Inferno", "Magma", "Cividis"],
+                            key=f"cmap_{file_info.get('name')}"
+                        )
+                        cmap = cm.get_cmap(cmap_choice)
+                        unique_vals = gdf_sample[color_attr].unique()
+                        if np.issubdtype(unique_vals.dtype, np.number):
+                            norm = mcolors.Normalize(vmin=unique_vals.min(), vmax=unique_vals.max())
+                            # 各フィーチャーに対して、色を計算し、properties に "get_color" として保存
+                            for feature in geojson_data["features"]:
+                                if color_attr in feature["properties"]:
+                                    val = feature["properties"][color_attr]
+                                    color = cmap(norm(val))  # RGBA (0～1)
+                                    # 0～255 に変換し、alpha を固定(例: 160)
+                                    feature["properties"]["get_color"] = [int(255 * color[i]) for i in range(3)] + [160]
+                                else:
+                                    # "value" がなければデフォルト色を設定
+                                    feature["properties"]["get_color"] = [200, 30, 0, 160]
                     # 座標の中心は gdf の全体境界から計算
                     bounds = gdf_sample.total_bounds  # [minx, miny, maxx, maxy]
                     center_lat = (bounds[1] + bounds[3]) / 2
@@ -732,12 +770,15 @@ def display_dashboard_plotly_pydeck():
                     all_lat.append(center_lat)
                     all_lon.append(center_lon)
                     geojson_data = gdf_sample.__geo_interface__
-                    layer = pdk.Layer(
+                    all_lat.extend(df_sample[lat_col].dropna().tolist())
+                    all_lon.extend(df_sample[lon_col].dropna().tolist())
+                    geojson_layer = pdk.Layer(
                         "GeoJsonLayer",
                         data=geojson_data,
-                        get_fill_color=[180, 0, 200, 140],
-                        get_line_color=[255, 255, 255],
-                        line_width_min_pixels=1,
+                        get_fill_color="properties.get_color",
+                        pickable=True,
+                        auto_highlight=True,
+                        stroked=True,
                     )
                     map_layers.append(layer)
                 else:
