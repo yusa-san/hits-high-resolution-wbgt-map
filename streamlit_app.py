@@ -17,6 +17,8 @@ import plotly.graph_objects as go
 import pydeck as pdk
 import numpy as np
 
+st.set_page_config(layout="wide")
+
 def file_selection_screen():
     st.header("ファイル選択")
 
@@ -660,6 +662,7 @@ def display_dashboard_plotly_pydeck():
     if "upload_entries" in st.session_state:
         all_entries.extend(st.session_state["upload_entries"])
 
+    st.sidebar.header("条件設定")
     st.sidebar.write("all_entries:")
     st.sidebar.write(all_entries)
     
