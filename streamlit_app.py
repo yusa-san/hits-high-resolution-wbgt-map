@@ -10,6 +10,8 @@ import folium
 from streamlit_folium import st_folium
 from io import StringIO
 import json
+import plotly.express as px
+import plotly.graph_objects as go
 
 def file_selection_screen():
     st.header("ファイル選択")
@@ -477,6 +479,168 @@ def display_dashboard():
     
     st_folium(m)
 
+def display_dashboard_plotly():
+    st.header("ダッシュボード表示画面")
+    st.write("以下の地図上に、選択されたデータを表示します。")
+
+    # Plotly用の地図フィギュアを作成（初期設定：open-street-map、中心は日本付近）
+    fig = go.Figure()
+    fig.update_layout(
+        mapbox_style="open-street-map",
+        mapbox=dict(center=dict(lat=36, lon=138), zoom=5),
+        margin={"r":0, "t":0, "l":0, "b":0}
+    )
+
+    # 1. Inputフォルダからのファイル情報 (st.session_state["folder_entries"])
+    if "folder_entries" in st.session_state:
+        for file_info in st.session_state["folder_entries"]:
+            name = file_info["name"]
+            ext = os.path.splitext(name)[1].lower()
+            if file_info.get("source") == "folder":
+                if ext == ".csv":
+                    try:
+                        # キャッシュされたプレビューを利用
+                        df = file_info.get("preview", pd.read_csv(file_info["path"]))
+                        lat_col = file_info.get("lat_col", "lat")
+                        lon_col = file_info.get("lon_col", "lon")
+                        if lat_col in df.columns and lon_col in df.columns:
+                            scatter = px.scatter_mapbox(
+                                df,
+                                lat=lat_col,
+                                lon=lon_col,
+                                hover_data=df.columns,
+                                zoom=5
+                            )
+                            for trace in scatter.data:
+                                fig.add_trace(trace)
+                        else:
+                            st.warning(f"CSVファイル {name} に指定された緯度カラム '{lat_col}' と経度カラム '{lon_col}' が見つかりません。")
+                    except Exception as e:
+                        st.error(f"CSVファイル {name} の読み込みエラー: {e}")
+                elif ext == ".geojson":
+                    try:
+                        # GeoPandasで読み込み→GeoJSON形式に変換
+                        gdf = gpd.read_file(file_info["path"])
+                        geojson = gdf.__geo_interface__
+                        # 色付けのためのダミー列を作成
+                        if "dummy" not in gdf.columns:
+                            gdf["dummy"] = 1
+                        choropleth = px.choropleth_mapbox(
+                            gdf,
+                            geojson=geojson,
+                            locations=gdf.index,
+                            color="dummy",
+                            center={"lat": 36, "lon": 138},
+                            mapbox_style="open-street-map",
+                            zoom=5,
+                            opacity=0.5
+                        )
+                        for trace in choropleth.data:
+                            fig.add_trace(trace)
+                    except Exception as e:
+                        st.error(f"GeoJSONファイル {name} の読み込みエラー: {e}")
+                elif ext in [".tiff", ".tif"]:
+                    st.info(f"TIFFファイル {name} の表示は現状実装されていません。")
+
+    # 2. URL入力によるファイル情報 (st.session_state["url_entries"])
+    if "url_entries" in st.session_state:
+        for file_info in st.session_state["url_entries"]:
+            name = file_info.get("name", file_info.get("url", ""))
+            ext = os.path.splitext(name)[1].lower()
+            if file_info.get("source", "url") == "url":
+                if ext == ".csv":
+                    try:
+                        df = file_info.get("preview", pd.read_csv(file_info["url"]))
+                        lat_col = file_info.get("lat_col", "lat")
+                        lon_col = file_info.get("lon_col", "lon")
+                        if lat_col in df.columns and lon_col in df.columns:
+                            scatter = px.scatter_mapbox(
+                                df,
+                                lat=lat_col,
+                                lon=lon_col,
+                                hover_data=df.columns,
+                                zoom=5
+                            )
+                            for trace in scatter.data:
+                                fig.add_trace(trace)
+                        else:
+                            st.warning(f"CSVファイル {name} に指定された緯度カラム '{lat_col}' と経度カラム '{lon_col}' が見つかりません。")
+                    except Exception as e:
+                        st.error(f"CSV URL {file_info['url']} の読み込みエラー: {e}")
+                elif ext == ".geojson":
+                    try:
+                        gdf = gpd.read_file(file_info["url"])
+                        geojson = gdf.__geo_interface__
+                        if "dummy" not in gdf.columns:
+                            gdf["dummy"] = 1
+                        choropleth = px.choropleth_mapbox(
+                            gdf,
+                            geojson=geojson,
+                            locations=gdf.index,
+                            color="dummy",
+                            center={"lat": 36, "lon": 138},
+                            mapbox_style="open-street-map",
+                            zoom=5,
+                            opacity=0.5
+                        )
+                        for trace in choropleth.data:
+                            fig.add_trace(trace)
+                    except Exception as e:
+                        st.error(f"GeoJSON URL {file_info['url']} の読み込みエラー: {e}")
+                elif ext in [".tiff", ".tif"]:
+                    st.info(f"TIFFファイル {name} の表示は現状実装されていません。")
+    
+    # 3. アップロードによるファイル情報 (st.session_state["upload_entries"])
+    if "upload_entries" in st.session_state:
+        for file_info in st.session_state["upload_entries"]:
+            name = file_info["name"]
+            ext = os.path.splitext(name)[1].lower()
+            if file_info.get("source") == "upload":
+                if ext == ".csv":
+                    try:
+                        df = file_info.get("preview", pd.read_csv(file_info["file"]))
+                        lat_col = file_info.get("lat_col", "lat")
+                        lon_col = file_info.get("lon_col", "lon")
+                        if lat_col in df.columns and lon_col in df.columns:
+                            scatter = px.scatter_mapbox(
+                                df,
+                                lat=lat_col,
+                                lon=lon_col,
+                                hover_data=df.columns,
+                                zoom=5
+                            )
+                            for trace in scatter.data:
+                                fig.add_trace(trace)
+                        else:
+                            st.warning(f"CSVファイル {name} に指定された緯度カラム '{lat_col}' と経度カラム '{lon_col}' が見つかりません。")
+                    except Exception as e:
+                        st.error(f"アップロードCSVファイル {name} の読み込みエラー: {e}")
+                elif ext == ".geojson":
+                    try:
+                        file_info["file"].seek(0)
+                        gdf = gpd.read_file(file_info["file"])
+                        geojson = gdf.__geo_interface__
+                        if "dummy" not in gdf.columns:
+                            gdf["dummy"] = 1
+                        choropleth = px.choropleth_mapbox(
+                            gdf,
+                            geojson=geojson,
+                            locations=gdf.index,
+                            color="dummy",
+                            center={"lat": 36, "lon": 138},
+                            mapbox_style="open-street-map",
+                            zoom=5,
+                            opacity=0.5
+                        )
+                        for trace in choropleth.data:
+                            fig.add_trace(trace)
+                    except Exception as e:
+                        st.error(f"アップロードGeoJSONファイル {name} の読み込みエラー: {e}")
+                elif ext in [".tiff", ".tif"]:
+                    st.info(f"アップロードされたTIFFファイル {name} の表示は現状実装されていません。")
+    
+    st.plotly_chart(fig, use_container_width=True)
+
 def main():
     st.title("データ表示ダッシュボードアプリ")
     
@@ -487,7 +651,7 @@ def main():
     
     with tab2:
         try:
-            display_dashboard()
+            display_dashboard_plotly()
         except Exception as e:
             st.warning(f"Error: {e}")
 
