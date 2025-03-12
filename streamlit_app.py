@@ -672,8 +672,7 @@ def display_dashboard_plotly_pydeck():
     # レイヤーパネル
     st.sidebar.header("レイヤーパネル")
     # レイヤー名のリストをユーザーがドラッグ&ドロップで並び替え可能にする
-    original_layer_names = [file_info.get("name", "") for file_info in all_entries if file_info.get("name", "")]
-    sorted_layer_names = sort_items(original_layer_names, direction="vertical", key="layer_order")
+    sorted_layer_names = sort_items(all_entries, direction="vertical", key="layer_order")
     # 並び替えた順番に、各レイヤーの表示のON/OFFをチェックボックスで管理
     layer_visibility = {}
     for lname in sorted_layer_names:
