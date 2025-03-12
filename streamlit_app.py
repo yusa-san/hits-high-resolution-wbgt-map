@@ -484,7 +484,7 @@ def display_dashboard():
                     else:
                         get_color_expr = [200,30,0,160]
                     # アイコンで表示かポイントで表示かを選択
-                    if st.button("アイコンで表示", key=f"icon_button_{file_name}"):
+                    if st.sidebar.button("アイコンで表示", key=f"icon_button_{file_name}"):
                         # アイコンのアトラス（1枚の画像に複数のアイコンが含まれる画像）と、アイコンのマッピング情報を設定
                         icon_atlas = "https://raw.githubusercontent.com/visgl/deck.gl-data/master/website/icon-atlas.png"
                         icon_mapping = {
@@ -500,7 +500,7 @@ def display_dashboard():
                             iconMapping=icon_mapping,
                         )
                         map_layers.append(icon_layer)
-                    elif st.button("ポイントで表示", key=f"point_button_{file_name}"):
+                    else:
                         # サイズ
                         radius = st.sidebar.text_input(f"半径", value=30, key=f"radius_key_{file_name}")
                         csv_layer = pdk.Layer(
