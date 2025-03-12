@@ -100,7 +100,7 @@ def file_selection_screen():
                     st.json(preview_data)
                 # CSVの場合は緯度経度カラム、TIFFの場合はバンドなどを入力
                 if ext == ".csv":
-                    lat_col_key = f"lat_column_{i}}"
+                    lat_col_key = f"lat_column_{i}"
                     lon_col_key = f"lon_column_{i}"
                     lat_default = st.session_state.get(f"lat_column_{i}", "lat")
                     lon_default = st.session_state.get(f"lon_column_{i}", "lon")
