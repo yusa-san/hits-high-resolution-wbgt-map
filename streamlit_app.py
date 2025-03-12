@@ -543,18 +543,37 @@ def display_dashboard():
                     all_lon.append(center_lon)
                     # ジオメトリの種類によって処理を分ける
                     if gdf_sample.geometry.geom_type.iloc[0] == "Point":
-                        # CSVの場合にはポイントのサイズ
-                        radius = st.sidebar.text_input(f"半径", value=30, key=f"radius_key_{file_name}")
-                        # Pointの場合にはScatterplotLayer
-                        geojson_layer = pdk.Layer(
-                            "ScatterplotLayer",
-                            data=gdf_sample,
-                            get_position="geometry.coordinates",
-                            get_fill_color="properties.get_color",
-                            get_radius=radius,
-                            pickable=True,
-                            auto_highlight=True,
-                        )
+                        if st.button("アイコンで表示", key=f"icon_button_{file_name}"):
+                            # アイコンのアトラス（1枚の画像に複数のアイコンが含まれる画像）と、アイコンのマッピング情報を設定
+                            icon_atlas = "https://raw.githubusercontent.com/visgl/deck.gl-data/master/website/icon-atlas.png"
+                            icon_mapping = {
+                                "marker": {"x": 0, "y": 0, "width": 128, "height": 128, "mask": True},
+                            }
+
+                            icon_layer = pdk.Layer(
+                                "IconLayer",
+                                data=gdf_sample,
+                                get_icon="icon",
+                                get_position="geometry.coordinates",
+                                sizeScale=15,
+                                iconAtlas=icon_atlas,
+                                iconMapping=icon_mapping,
+                            )
+                            map_layers.append(icon_layer)
+                        elif st.button("ポイントで表示", key=f"point_button_{file_name}"):
+                            # CSVの場合にはポイントのサイズ
+                            radius = st.sidebar.text_input(f"半径", value=30, key=f"radius_key_{file_name}")
+                            # Pointの場合にはScatterplotLayer
+                            geojson_layer = pdk.Layer(
+                                "ScatterplotLayer",
+                                data=gdf_sample,
+                                get_position="geometry.coordinates",
+                                get_fill_color="properties.get_color",
+                                get_radius=radius,
+                                pickable=True,
+                                auto_highlight=True,
+                            )
+                            map_layers.append(geojson_layer)
                     else:
                         geojson_data = gdf_sample.__geo_interface__
                         geojson_layer = pdk.Layer(
@@ -564,7 +583,7 @@ def display_dashboard():
                             pickable=True,
                             auto_highlight=True,
                         )
-                    map_layers.append(geojson_layer)
+                        map_layers.append(geojson_layer)
                 else:
                     st.sidebar.warning(f"GeoJSONファイル {file_name} の読み込みに失敗しました。")
             except Exception as e:
