@@ -16,7 +16,9 @@ import plotly.express as px
 import plotly.graph_objects as go
 import pydeck as pdk
 import numpy as np
-from streamlit_sortables import sort_items
+import base64
+from io import BytesIO
+from PIL import Image
 
 st.set_page_config(layout="wide")
 
@@ -73,13 +75,10 @@ def file_selection_screen():
                     st.error(f"GeoJSONプレビュー読み込みエラー ({file_name}): {e}")
             elif ext in [".tiff", ".tif"]:
                 try:
-                    with rasterio.open(file_info["path"]) as src:
-                        meta = src.meta
-                    file_info["preview"] = meta
+                    file_info["preview"] = load_tiff_preview_as_array(file_info["path"])
                     file_info["loaded"] = True
                 except Exception as e:
                     st.error(f"TIFFメタデータ読み込みエラー ({file_name}): {e}")
-                # file_info['band'] = st.text_input(f"{file_name} の色分け用バンド", value=file_info["band"], key=f"band_folder_{file_name}")
 
             # file_infoを追加
             if not any(entry['name'] == file_info['name'] for entry in st.session_state["folder_entries"]):
@@ -207,7 +206,11 @@ def file_selection_screen():
                             tiff_data = b"".join(data_chunks)
                             with MemoryFile(tiff_data) as memfile:
                                 with memfile.open() as src:
-                                    meta = src.meta
+                                    bounds = src.bounds  # left, bottom, right, top
+                                    image_data = src.read()  # shape: (bands, height, width)
+                                    gray = image_data[0]
+                                    file_info["preview"] = {"img_array": gray, "bounds": [[bounds.left, bounds.bottom], [bounds.right, bounds.top]]}
+                                    file_info["loaded"] = True
                             st.success(f"{file_name} の読み込みが完了しました。")
                             st.session_state["url_entries"][i]["preview"] = meta
                         else:
@@ -319,13 +322,10 @@ def file_selection_screen():
             elif ext in [".tiff", ".tif"]:
                 try:
                     uploaded_file.seek(0)
-                    with rasterio.open(uploaded_file) as src:
-                        meta = src.meta
-                    file_info["preview"] = meta
+                    file_info["preview"] = load_tiff_preview_as_array(uploaded_file)
                     file_info["loaded"] = True
                 except Exception as e:
-                    st.error(f"アップロードTIFFメタデータ読み込みエラー ({file_name}): {e}")
-                # file_info['band'] = st.text_input(f"{file_name} の色分け用バンド", value=file_info["band"], key=f"band_upload_{file_name}")
+                    st.error(f"TIFFメタデータ読み込みエラー ({file_name}): {e}")
 
             # file_infoを追加
             if not any(entry['name'] == file_info['name'] for entry in st.session_state["upload_entries"]):
@@ -384,6 +384,20 @@ def file_selection_screen():
         for file_info in st.session_state["upload_entries"]:
             st.write(f"{file_info.get('name', 'error:name')} ({file_info.get('source', 'error:source')})")
             st.write(f"file_info: {file_info}")
+
+def load_tiff_preview_as_array(file_path): # 単一バンドのみに対応
+    with rasterio.open(file_path) as src:
+        bounds = src.bounds  # left, bottom, right, top
+        image_data = src.read()  # shape: (bands, height, width)
+        gray = image_data[0]
+    return {"img_array": gray, "bounds": [[bounds.left, bounds.bottom], [bounds.right, bounds.top]]}
+
+def numpy_array_to_data_uri(img_array):
+    img = Image.fromarray(img_array)
+    buffer = BytesIO()
+    img.save(buffer, format="PNG")
+    encoded = base64.b64encode(buffer.getvalue()).decode("utf-8")
+    return f"data:image/png;base64,{encoded}"
 
 def display_dashboard():
     st.header("ダッシュボード表示画面")
@@ -545,9 +559,54 @@ def display_dashboard():
                     st.sidebar.warning(f"GeoJSONファイル {file_name} の読み込みに失敗しました。")
             except Exception as e:
                 st.sidebar.error(f"GeoJSONファイル {file_name} のマップレイヤー生成エラー: {e}")
+        # TIFFの場合
         elif ext in [".tiff", ".tif"]:
-            st.sidebar.info(f"TIFFファイル {file_name} はマップ表示対象外です。")
-    
+            try:
+                # ソースに応じたTIFFの読み込み
+                if file_info.get("source") == "folder":
+                    src = rasterio.open(file_info["path"])
+                elif file_info.get("source") == "url":
+                    import requests
+                    response = requests.get(file_info["url"])
+                    response.raise_for_status()
+                    memfile = MemoryFile(response.content)
+                    src = memfile.open()
+                elif file_info.get("source") == "upload":
+                    file_info["file"].seek(0)
+                    src = rasterio.open(file_info["file"])
+
+                # TIFFから画像データを読み込み（RGBまたは単一バンドの場合の対応）
+                image_data = src.read()  # shape: (bands, height, width)
+                if image_data.shape[0] >= 3:
+                    rgb = image_data[:3]
+                    rgb = np.transpose(rgb, (1, 2, 0))
+                else:
+                    # 単一バンドの場合はグレースケール画像に変換
+                    gray = image_data[0]
+                    rgb = np.stack([gray, gray, gray], axis=-1)
+
+                # PILでPNG画像に変換してBase64エンコード
+                img = Image.fromarray(rgb.astype(np.uint8))
+                buffer = BytesIO()
+                img.save(buffer, format="PNG")
+                data = base64.b64encode(buffer.getvalue()).decode()
+                img_url = f"data:image/png;base64,{data}"
+
+                # 画像の表示範囲を、TIFFの座標境界から取得
+                bounds = src.bounds  # left, bottom, right, top
+
+                # BitmapLayerを作成
+                bitmap_layer = pdk.Layer(
+                    "BitmapLayer",
+                    data=None,
+                    image=img_url,
+                    bounds=[[bounds.left, bounds.bottom], [bounds.right, bounds.top]]
+                )
+                map_layers.append(bitmap_layer)
+                src.close()
+            except Exception as e:
+                st.sidebar.error(f"TIFFファイル {file_name} の読み込みエラー: {e}")
+
     # 自動で中心とズームレベルを設定
     if all_lat and all_lon:
         center_lat = sum(all_lat) / len(all_lat)

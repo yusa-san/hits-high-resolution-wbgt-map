@@ -12,3 +12,4 @@ folium
 plotly
 pydeck
 streamlit-sortables
+pillow
