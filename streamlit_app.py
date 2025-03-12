@@ -554,8 +554,12 @@ def display_dashboard():
                                     # 0～255 に変換し、alpha を固定(例: 160)
                                     feature["properties"]["get_color"] = [int(255 * color[i]) for i in range(3)] + [160]
                                 else:
-                                    # "value" がなければデフォルト色を設定
+                                    # color_attr がなければデフォルト色を設定
                                     feature["properties"]["get_color"] = [200, 30, 0, 160]
+                        else:
+                            # 数値型でない場合は全てにデフォルト色を設定
+                            for feature in geojson_data["features"]:
+                                feature["properties"]["get_color"] = [200, 30, 0, 160]
                     # 座標の中心は gdf の全体境界から計算
                     bounds = gdf_sample.total_bounds  # [minx, miny, maxx, maxy]
                     center_lat = (bounds[1] + bounds[3]) / 2
