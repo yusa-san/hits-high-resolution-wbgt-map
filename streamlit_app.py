@@ -39,16 +39,16 @@ def file_selection_screen():
         supported_exts = ['.csv', '.geojson', '.tiff', '.tif']
         folder_files = [f for f in folder_files if any(f.lower().endswith(ext) for ext in supported_exts)]
         folder_selected = st.multiselect("Inputフォルダ内のファイル", folder_files)
-        for i, file_name in enumerate(folder_selected):
+        for file_name in folder_selected:
             # 各要素の初期値を file_info にまとめて設定
             file_info = {
                 "source": "folder",
                 "name": file_name,
                 "path": os.path.join(input_folder, file_name),
                 "loaded": False,
-                "lat_col": st.session_state.get(f"lat_column_{i}", "lat"),
-                "lon_col": st.session_state.get(f"lon_column_{i}", "lon"),
-                "band": st.session_state.get(f"band_folder_{i}", 1),
+                "lat_col": st.session_state.get(f"lat_column_{file_name}", "lat"),
+                "lon_col": st.session_state.get(f"lon_column_{file_name}", "lon"),
+                "band": st.session_state.get(f"band_folder_{file_name}", 1),
                 "preview": None,
             }
             ext = os.path.splitext(file_name)[1].lower()
@@ -100,10 +100,10 @@ def file_selection_screen():
                     st.json(preview_data)
                 # CSVの場合は緯度経度カラム、TIFFの場合はバンドなどを入力
                 if ext == ".csv":
-                    lat_col_key = f"lat_column_{i}"
-                    lon_col_key = f"lon_column_{i}"
-                    lat_default = st.session_state.get(f"lat_column_{i}", "lat")
-                    lon_default = st.session_state.get(f"lon_column_{i}", "lon")
+                    lat_col_key = f"lat_column_{file_name}"
+                    lon_col_key = f"lon_column_{file_name}"
+                    lat_default = st.session_state.get(f"lat_column_{file_name}", "lat")
+                    lon_default = st.session_state.get(f"lon_column_{file_name}", "lon")
                     st.session_state["folder_entries"][i]["lat_col"] = st.text_input(
                         f"{file_name} の緯度カラム", value=lat_default, key=lat_col_key
                     )
@@ -113,8 +113,8 @@ def file_selection_screen():
                     )
                     st.success(f"{file_name} の経度カラムを{lon_default} に設定しました。")
                 elif ext in [".tiff", ".tif"]:
-                    band_key = f"band_folder_{i}"
-                    band_default = st.session_state.get(f"band_folder_{i}", 1)
+                    band_key = f"band_folder_{file_name}"
+                    band_default = st.session_state.get(f"band_folder_{file_name}", 1)
                     st.session_state["folder_entries"][i]["band"] = st.text_input(
                         f"{file_name} の色分け用バンド", value=band_default, key=band_key
                     )
@@ -152,6 +152,10 @@ def file_selection_screen():
             key=f"url_input_{i}",  # キーをユニークに
             value=entry["url"]
         )
+        if url_input in [ent["url"] for ent in st.session_state["url_entries"][:i]]:
+            st.error("同じURLが既に入力されています。")
+            continue
+        
         # “読み込み”ボタン
         if not entry["loaded"] and st.button("読み込み", key=f"load_url_{i}"):
             # URLをセッションステートにも反映
@@ -227,10 +231,10 @@ def file_selection_screen():
                 st.json(preview_data)
             # CSVの場合は緯度経度カラム、TIFFの場合はバンドなどを入力
             if ext == ".csv":
-                lat_col_key = f"lat_column_{i}" # file_name ではなく i を使う
-                lon_col_key = f"lon_column_{i}"
-                lat_default = st.session_state.get(f"lat_column_{i}", "lat")
-                lon_default = st.session_state.get(f"lon_column_{i}", "lon")
+                lat_col_key = f"lat_column_{file_name}"
+                lon_col_key = f"lon_column_{file_name}"
+                lat_default = st.session_state.get(f"lat_column_{file_name}", "lat")
+                lon_default = st.session_state.get(f"lon_column_{file_name}", "lon")
                 st.session_state["url_entries"][i]["lat_col"] = st.text_input(
                     f"{file_name} の緯度カラム", value=lat_default, key=lat_col_key
                 )
@@ -241,8 +245,8 @@ def file_selection_screen():
                 st.success(f"{file_name} の経度カラムを{lon_default} に設定しました。")
 
             elif ext in [".tiff", ".tif"]:
-                band_key = f"band_url_{i}"
-                band_default = st.session_state.get(f"band_url_{i}", 1)
+                band_key = f"band_url_{file_name}"
+                band_default = st.session_state.get(f"band_url_{file_name}", 1)
                 st.session_state["url_entries"][i]["band"] = st.text_input(
                     f"{file_name} の色分け用バンド", value=band_default, key=band_key
                 )
@@ -288,9 +292,9 @@ def file_selection_screen():
                 "name": file_name,
                 "file": uploaded_file,
                 "loaded": False,
-                "lat_col": st.session_state.get(f"lat_column_{i}", "lat"),
-                "lon_col": st.session_state.get(f"lon_column_{i}", "lon"),
-                "band": st.session_state.get(f"band_upload_{i}", 1),
+                "lat_col": st.session_state.get(f"lat_column_{file_name}", "lat"),
+                "lon_col": st.session_state.get(f"lon_column_{file_name}", "lon"),
+                "band": st.session_state.get(f"band_upload_{file_name}", 1),
                 "preview": None,
             }
             ext = os.path.splitext(file_name)[1].lower()
@@ -342,10 +346,10 @@ def file_selection_screen():
                     st.json(preview_data)
                 # CSVの場合は緯度経度カラム、TIFFの場合はバンドなどを入力
                 if ext == ".csv":
-                    lat_col_key = f"lat_column_{i}"
-                    lon_col_key = f"lon_column_{i}"
-                    lat_default = st.session_state.get(f"lat_column_{i}", "lat")
-                    lon_default = st.session_state.get(f"lon_column_{i}", "lon")
+                    lat_col_key = f"lat_column_{file_name}"
+                    lon_col_key = f"lon_column_{file_name}"
+                    lat_default = st.session_state.get(f"lat_column_{file_name}", "lat")
+                    lon_default = st.session_state.get(f"lon_column_{file_name}", "lon")
                     st.session_state["upload_entries"][i]["lat_col"] = st.text_input(
                         f"{file_name} の緯度カラム", value=lat_default, key=lat_col_key
                     )
@@ -355,8 +359,8 @@ def file_selection_screen():
                     )
                     st.success(f"{file_name} の経度カラムを{lon_default} に設定しました。")
                 elif ext in [".tiff", ".tif"]:
-                    band_key = f"band_upload_{i}"
-                    band_default = st.session_state.get(f"band_upload_{i}", 1)
+                    band_key = f"band_upload_{file_name}"
+                    band_default = st.session_state.get(f"band_upload_{file_name}", 1)
                     st.session_state["upload_entries"][i]["band"] = st.text_input(
                         f"{file_name} の色分け用バンド", value=band_default, key=band_key
                     )
