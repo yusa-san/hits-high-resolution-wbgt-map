@@ -39,7 +39,7 @@ def file_selection_screen():
         supported_exts = ['.csv', '.geojson', '.tiff', '.tif']
         folder_files = [f for f in folder_files if any(f.lower().endswith(ext) for ext in supported_exts)]
         folder_selected = st.multiselect("Inputフォルダ内のファイル", folder_files)
-        for file_name in folder_selected:
+        for i, file_name in enumerate(folder_selected):
             # 各要素の初期値を file_info にまとめて設定
             file_info = {
                 "source": "folder",
