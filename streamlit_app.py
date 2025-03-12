@@ -572,6 +572,7 @@ def display_dashboard():
                         bounds_bottom = bounds[0][1]
                         bounds_right = bounds[1][0]
                         bounds_top = bounds[1][1]
+                st.write(f"{img_url}")
                 # BitmapLayerを作成
                 bitmap_layer = pdk.Layer(
                     "BitmapLayer",
