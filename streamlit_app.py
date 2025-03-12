@@ -671,12 +671,10 @@ def display_dashboard_plotly_pydeck():
 
     # レイヤーパネル
     st.sidebar.header("レイヤーパネル")
-    # レイヤー名のリストをユーザーがドラッグ&ドロップで並び替え可能にする
-    sorted_layer_names = sort_items(all_entries, direction="vertical", key="layer_order")
-    # 並び替えた順番に、各レイヤーの表示のON/OFFをチェックボックスで管理
     layer_visibility = {}
-    for lname in sorted_layer_names:
-        layer_visibility[lname] = st.sidebar.checkbox(f"{lname} を表示", value=True, key=f"visibility_{lname}")
+    for file_info in all_entries:
+        file_name = file_info.get("name", "")
+        layer_visibility[file_name] = st.sidebar.checkbox(f"{file_name} を表示", value=True)
 
     # --- Pydeck 用：大容量地理空間ファイルの表示 ---
     map_layers = []
