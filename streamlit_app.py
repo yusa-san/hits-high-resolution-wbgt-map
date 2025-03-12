@@ -483,18 +483,36 @@ def display_dashboard():
                         get_color_expr = "get_color"
                     else:
                         get_color_expr = [200,30,0,160]
-                    # サイズ
-                    radius = st.sidebar.text_input(f"半径", value=30, key=f"radius_key_{file_name}")
-                    layer = pdk.Layer(
-                        "ScatterplotLayer",
-                        data=df_sample,
-                        get_position=[lon_col, lat_col],
-                        get_fill_color=get_color_expr,
-                        get_radius=radius,
-                        pickable=True,
-                        auto_highlight=True,
-                    )
-                    map_layers.append(layer)
+                    # アイコンで表示かポイントで表示かを選択
+                    if st.button("アイコンで表示", key=f"icon_button_{file_name}"):
+                        # アイコンのアトラス（1枚の画像に複数のアイコンが含まれる画像）と、アイコンのマッピング情報を設定
+                        icon_atlas = "https://raw.githubusercontent.com/visgl/deck.gl-data/master/website/icon-atlas.png"
+                        icon_mapping = {
+                            "marker": {"x": 0, "y": 0, "width": 128, "height": 128, "mask": True},
+                        }
+                        icon_layer = pdk.Layer(
+                            "IconLayer",
+                            data=df_sample,
+                            get_icon="icon",
+                            get_position=[lon_col, lat_col],
+                            sizeScale=15,
+                            iconAtlas=icon_atlas,
+                            iconMapping=icon_mapping,
+                        )
+                        map_layers.append(icon_layer)
+                    elif st.button("ポイントで表示", key=f"point_button_{file_name}"):
+                        # サイズ
+                        radius = st.sidebar.text_input(f"半径", value=30, key=f"radius_key_{file_name}")
+                        csv_layer = pdk.Layer(
+                            "ScatterplotLayer",
+                            data=df_sample,
+                            get_position=[lon_col, lat_col],
+                            get_fill_color=get_color_expr,
+                            get_radius=radius,
+                            pickable=True,
+                            auto_highlight=True,
+                        )
+                        map_layers.append(csv_layer)
                 else:
                     st.sidebar.warning(f"CSVファイル {file_name} に指定された緯度/経度カラムが見つかりません。")
             except Exception as e:
