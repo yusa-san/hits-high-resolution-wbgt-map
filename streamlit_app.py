@@ -155,7 +155,7 @@ def file_selection_screen():
         if url_input in [ent["url"] for ent in st.session_state["url_entries"][:i]]:
             st.error("同じURLが既に入力されています。")
             continue
-        
+
         # “読み込み”ボタン
         if not entry["loaded"] and st.button("読み込み", key=f"load_url_{i}"):
             # URLをセッションステートにも反映
@@ -406,7 +406,7 @@ def display_dashboard():
     layer_visibility = {}
     for file_info in all_entries:
         if file_info.get("source", "") == "url":
-            if file_info.get("loaded", False):
+            if file_info.get("loaded", True) is False:
                 continue
         file_name = file_info.get("name", "")
         layer_visibility[file_name] = st.sidebar.checkbox(f"{file_name} を表示", value=True)
