@@ -575,6 +575,7 @@ def display_dashboard():
                     bounds=[[bounds.left, bounds.bottom], [bounds.right, bounds.top]]
                 )
                 map_layers.append(bitmap_layer)
+                st.write(f"TIFFファイル {file_name} をマップレイヤーに追加しました。")
             except Exception as e:
                 st.sidebar.error(f"TIFFファイル {file_name} の読み込みエラー: {e}")
 
