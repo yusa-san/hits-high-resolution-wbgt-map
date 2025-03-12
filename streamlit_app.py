@@ -458,7 +458,7 @@ def display_dashboard():
                     # 属性カラムによる色分け
                     columns_list = df_sample.columns.tolist()
                     columns_list.extend([None])
-                    color_attr = st.sidebar.selectbox("Inputフォルダ内のファイル", columns_list, format_func=lambda x: "None" if x is None else x)
+                    color_attr = st.sidebar.selectbox(f"Inputフォルダ内のファイル{file_name}", columns_list, format_func=lambda x: "None" if x is None else x)
                     if color_attr and color_attr in df_sample.columns:
                         # プルダウンでカラーマップを選択
                         cmap_choice = st.sidebar.selectbox(
@@ -511,7 +511,7 @@ def display_dashboard():
                     # 属性カラムによる色分け
                     columns_list = gdf_sample.columns.tolist()
                     columns_list.extend([None])
-                    color_attr = st.sidebar.selectbox("Inputフォルダ内のファイル", columns_list, format_func=lambda x: "None" if x is None else x)
+                    color_attr = st.sidebar.selectbox(f"Inputフォルダ内のファイル{file_name}", columns_list, format_func=lambda x: "None" if x is None else x)
                     if color_attr and color_attr in gdf_sample.columns:
                         # プルダウンでカラーマップを選択
                         cmap_choice = st.sidebar.selectbox(
