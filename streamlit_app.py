@@ -544,8 +544,8 @@ def display_dashboard():
                         )
                         cmap = plt.get_cmap(cmap_choice)
                         unique_vals = gdf_sample[color_attr].unique()
-                        st.sidebar.write(f"ここまでok")
                         if np.issubdtype(unique_vals.dtype, np.number):
+                            st.sidebar.write(f"ここまでok")
                             norm = mcolors.Normalize(vmin=unique_vals.min(), vmax=unique_vals.max())
                             # 各フィーチャーに対して、色を計算し、properties に "get_color" として保存
                             for feature in geojson_data["features"]:
