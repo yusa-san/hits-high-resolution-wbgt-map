@@ -16,6 +16,7 @@ import plotly.express as px
 import plotly.graph_objects as go
 import pydeck as pdk
 import numpy as np
+from streamlit_sortables import sort_items
 
 st.set_page_config(layout="wide")
 
@@ -665,7 +666,18 @@ def display_dashboard_plotly_pydeck():
     st.sidebar.header("条件設定")
     st.sidebar.write("all_entries:")
     st.sidebar.write(all_entries)
-    
+
+    # レイヤーパネル
+    st.sidebar.header("レイヤーパネル")
+    layer_visibility = {}
+    layer_order = sort_items(
+        [file_info.get("name", "") for file_info in all_entries],
+        direction="vertical",
+        key="layer_order"
+    )
+    for file_name in layer_order:
+        layer_visibility[file_name] = st.sidebar.checkbox(f"{file_name} を表示", value=True)
+
     # --- Pydeck 用：大容量地理空間ファイルの表示 ---
     map_layers = []
     all_lat = []
