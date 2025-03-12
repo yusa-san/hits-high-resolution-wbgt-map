@@ -491,6 +491,8 @@ def display_dashboard():
                         get_position=[lon_col, lat_col],
                         get_fill_color=get_color_expr,
                         get_radius=radius,
+                        pickable=True,
+                        auto_highlight=True,
                     )
                     map_layers.append(layer)
                 else:
@@ -533,14 +535,27 @@ def display_dashboard():
                                 else:
                                     # "value" がなければデフォルト色を設定
                                     feature["properties"]["get_color"] = [200, 30, 0, 160]
-                    # サイズ
-                    radius = st.sidebar.text_input(f"半径", value=30, key=f"radius_key_{file_name}")
                     # 座標の中心は gdf の全体境界から計算
                     bounds = gdf_sample.total_bounds  # [minx, miny, maxx, maxy]
                     center_lat = (bounds[1] + bounds[3]) / 2
                     center_lon = (bounds[0] + bounds[2]) / 2
                     all_lat.append(center_lat)
                     all_lon.append(center_lon)
+                    # ジオメトリの種類によって処理を分ける
+                    if gdf_sample.geometry.geom_type.iloc[0] == "Point":
+                        # CSVの場合にはポイントのサイズ
+                        radius = st.sidebar.text_input(f"半径", value=30, key=f"radius_key_{file_name}")
+                        # Pointの場合にはScatterplotLayer
+                        layer = pdk.Layer(
+                            "ScatterplotLayer",
+                            data=gdf_sample,
+                            get_position="geometry.coordinates",
+                            get_fill_color="properties.get_color",
+                            get_radius=radius,
+                            pickable=True,
+                            auto_highlight=True,
+                        )
+                    else:
                     geojson_data = gdf_sample.__geo_interface__
                     geojson_layer = pdk.Layer(
                         "GeoJsonLayer",
@@ -548,7 +563,6 @@ def display_dashboard():
                         get_fill_color="properties.get_color",
                         pickable=True,
                         auto_highlight=True,
-                        stroked=True,
                         get_radius=radius,
                     )
                     map_layers.append(geojson_layer)
