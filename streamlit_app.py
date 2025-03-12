@@ -543,6 +543,7 @@ def display_dashboard():
                             key=f"cmap_{file_info.get('name')}"
                         )
                         cmap = plt.get_cmap(cmap_choice)
+                        st.sidebar.write(f"color_attr: {color_attr}")
                         unique_vals = gdf_sample[color_attr].unique()
                         if np.issubdtype(unique_vals.dtype, np.number):
                             norm = mcolors.Normalize(vmin=unique_vals.min(), vmax=unique_vals.max())
