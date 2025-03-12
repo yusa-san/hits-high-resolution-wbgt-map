@@ -396,7 +396,7 @@ def numpy_array_to_data_uri(img_array):
     buffer = BytesIO()
     img.save(buffer, format="PNG")
     encoded = base64.b64encode(buffer.getvalue()).decode("utf-8")
-    return f"data:image/png;base64,{encoded}"
+    return f"image/png;base64,{encoded}"
 
 def display_dashboard():
     st.header("ダッシュボード表示画面")
