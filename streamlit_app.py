@@ -567,17 +567,18 @@ def display_dashboard():
                     bounds = preview.get("bounds", None)
                     if img_array is not None:
                         img_url = numpy_array_to_data_uri(img_array)
+                        img_url_ = f'{img_url}'
                     if bounds is not None:
                         bounds_left = bounds[0][0]
                         bounds_bottom = bounds[0][1]
                         bounds_right = bounds[1][0]
                         bounds_top = bounds[1][1]
-                st.write(f"{img_url}")
+                st.write(f"{img_url_}")
                 # BitmapLayerを作成
                 bitmap_layer = pdk.Layer(
                     "BitmapLayer",
                     data=None,
-                    image=f'{img_url}',
+                    image=img_url_,
                     bounds=[[bounds_left, bounds_bottom], [bounds_right, bounds_top]]
                 )
                 map_layers.append(bitmap_layer)
