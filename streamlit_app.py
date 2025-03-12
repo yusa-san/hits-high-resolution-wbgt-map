@@ -447,6 +447,14 @@ def display_dashboard():
                 st.sidebar.write(f"lat_col: {lat_col} lon_col: {lon_col}")
                 if df is not None:
                     st.sidebar.write(df.describe())
+                    # pyarrowへの変換を試す
+                    for col in df.columns:
+                        try:
+                            # Arrow への変換が可能か試す
+                            pa.array(df[col])
+                        except pa.ArrowTypeError:
+                            st.warning(f"カラム '{col}' の型が Arrow 変換に失敗したため、文字列に変換します。")
+                            df[col] = df[col].astype(str)
                     # 大きなデータの場合はサンプルを抽出
                     # if len(df) > 110000:
                         # df_sample = df.sample(n=110000, random_state=42)
@@ -524,11 +532,20 @@ def display_dashboard():
                 gdf = file_info.get("preview", None)
                 if gdf is not None:
                     st.sidebar.write(gdf.describe())
-                    if len(gdf) > 50000:
-                        gdf_sample = gdf.sample(n=50000, random_state=42)
-                        st.sidebar.warning(f"{file_name}を50000行にサンプル済み")
-                    else:
-                        gdf_sample = gdf
+                    # pyarrowへの変換を試す
+                    for col in gdf.columns:
+                        try:
+                            # Arrow への変換が可能か試す
+                            pa.array(gdf[col])
+                        except pa.ArrowTypeError:
+                            st.warning(f"カラム '{col}' の型が Arrow 変換に失敗したため、文字列に変換します。")
+                            gdf[col] = gdf[col].astype(str)
+                    # 大きなデータの場合はサンプルを抽出
+                    # if len(gdf) > 50000:
+                    #     gdf_sample = gdf.sample(n=50000, random_state=42)
+                    #     st.sidebar.warning(f"{file_name}を50000行にサンプル済み")
+                    # else:
+                    gdf_sample = gdf
                     # 属性カラムによる色分け
                     columns_list = gdf_sample.columns.tolist()
                     columns_list.extend([None])
