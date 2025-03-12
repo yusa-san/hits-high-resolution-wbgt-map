@@ -553,7 +553,7 @@ def display_dashboard():
                         stroked=True,
                         get_radius=radius,
                     )
-                    map_layers.append(layer)
+                    map_layers.append(geojson_layer)
                 else:
                     st.sidebar.warning(f"GeoJSONファイル {file_name} の読み込みに失敗しました。")
             except Exception as e:
