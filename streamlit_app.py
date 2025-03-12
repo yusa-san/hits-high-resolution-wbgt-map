@@ -603,16 +603,17 @@ def display_dashboard():
                         bounds_bottom = bounds[0][1]
                         bounds_right = bounds[1][0]
                         bounds_top = bounds[1][1]
-                st.write(f"{img_url_}")
+                # st.write(f"{img_url_}") # debug
                 # BitmapLayerを作成
-                bitmap_layer = pdk.Layer(
-                    "BitmapLayer",
-                    data=None,
-                    image=img_url_,
-                    bounds=[[bounds_left, bounds_bottom], [bounds_right, bounds_top]]
-                )
-                map_layers.append(bitmap_layer)
-                st.write(f"TIFFファイル {file_name} をマップレイヤーに追加しました。")
+                # bitmap_layer = pdk.Layer(
+                #     "BitmapLayer",
+                #     data=None,
+                #     image=img_url_,
+                #     bounds=[[bounds_left, bounds_bottom], [bounds_right, bounds_top]]
+                # )
+                # map_layers.append(bitmap_layer)
+                # st.write(f"TIFFファイル {file_name} をマップレイヤーに追加しました。")
+                st.sidebar.warning(f"TIFFファイル {file_name} には対応していません。")
             except Exception as e:
                 st.sidebar.error(f"TIFFファイル {file_name} の読み込みエラー: {e}")
 
