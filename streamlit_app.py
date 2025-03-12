@@ -530,6 +530,7 @@ def display_dashboard():
                     #     st.sidebar.warning(f"{file_name}を50000行にサンプル済み")
                     # else:
                     gdf_sample = gdf
+                    geojson_data = gdf_sample.__geo_interface__
                     # 属性カラムによる色分け
                     columns_list = gdf_sample.columns.tolist()
                     columns_list.extend([None])
@@ -595,7 +596,6 @@ def display_dashboard():
                             )
                             map_layers.append(geojson_layer)
                     else:
-                        geojson_data = gdf_sample.__geo_interface__
                         geojson_layer = pdk.Layer(
                             "GeoJsonLayer",
                             data=geojson_data,
