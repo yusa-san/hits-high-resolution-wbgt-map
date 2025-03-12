@@ -382,6 +382,7 @@ def file_selection_screen():
             st.write(f"{file_info.get('name', 'error:name')} ({file_info.get('source', 'error:source')})")
             st.write(f"file_info: {file_info}")
 
+"""
 def display_dashboard():
     st.header("ダッシュボード表示画面")
     st.write("以下の地図上に、選択されたデータを表示します。")
@@ -650,6 +651,7 @@ def display_dashboard_plotly():
                     st.info(f"アップロードされたTIFFファイル {name} の表示は現状実装されていません。")
     
     st.plotly_chart(fig, use_container_width=True)
+"""
 
 def display_dashboard_plotly_pydeck():
     st.header("ダッシュボード表示画面")
@@ -669,14 +671,13 @@ def display_dashboard_plotly_pydeck():
 
     # レイヤーパネル
     st.sidebar.header("レイヤーパネル")
+    # レイヤー名のリストをユーザーがドラッグ&ドロップで並び替え可能にする
+    original_layer_names = [file_info.get("name", "") for file_info in all_entries if file_info.get("name", "")]
+    sorted_layer_names = sort_items(original_layer_names, direction="vertical", key="layer_order")
+    # 並び替えた順番に、各レイヤーの表示のON/OFFをチェックボックスで管理
     layer_visibility = {}
-    layer_order = sort_items(
-        [file_info.get("name", "") for file_info in all_entries],
-        direction="vertical",
-        key="layer_order"
-    )
-    for file_name in layer_order:
-        layer_visibility[file_name] = st.sidebar.checkbox(f"{file_name} を表示", value=True)
+    for lname in sorted_layer_names:
+        layer_visibility[lname] = st.sidebar.checkbox(f"{lname} を表示", value=True, key=f"visibility_{lname}")
 
     # --- Pydeck 用：大容量地理空間ファイルの表示 ---
     map_layers = []
@@ -684,7 +685,11 @@ def display_dashboard_plotly_pydeck():
     all_lon = []
     # CSV・GeoJSON で、緯度・経度の情報が存在するものを対象とする
     for file_info in all_entries:
-        file_name = file_info.get("name", "")
+        fname = file_info.get("name", "")
+        # レイヤーパネルで非表示になっている場合はスキップ
+        if fname and not layer_visibility.get(fname, True):
+            continue
+        file_name = fname
         ext = os.path.splitext(file_name)[1].lower()
         # CSVの場合：プレビューは file_info["preview"]（サンプリング済みであることを想定）
         if ext == ".csv":
