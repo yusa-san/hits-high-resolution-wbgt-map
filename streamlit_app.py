@@ -561,39 +561,12 @@ def display_dashboard():
         # TIFFの場合
         elif ext in [".tiff", ".tif"]:
             try:
-                # ソースに応じたTIFFの読み込み
-                if file_info.get("source") == "folder":
-                    src = rasterio.open(file_info["path"])
-                elif file_info.get("source") == "url":
-                    import requests
-                    response = requests.get(file_info["url"])
-                    response.raise_for_status()
-                    memfile = MemoryFile(response.content)
-                    src = memfile.open()
-                elif file_info.get("source") == "upload":
-                    file_info["file"].seek(0)
-                    src = rasterio.open(file_info["file"])
-
-                # TIFFから画像データを読み込み（RGBまたは単一バンドの場合の対応）
-                image_data = src.read()  # shape: (bands, height, width)
-                if image_data.shape[0] >= 3:
-                    rgb = image_data[:3]
-                    rgb = np.transpose(rgb, (1, 2, 0))
-                else:
-                    # 単一バンドの場合はグレースケール画像に変換
-                    gray = image_data[0]
-                    rgb = np.stack([gray, gray, gray], axis=-1)
-
-                # PILでPNG画像に変換してBase64エンコード
-                img = Image.fromarray(rgb.astype(np.uint8))
-                buffer = BytesIO()
-                img.save(buffer, format="PNG")
-                data = base64.b64encode(buffer.getvalue()).decode()
-                img_url = f"data:image/png;base64,{data}"
-
-                # 画像の表示範囲を、TIFFの座標境界から取得
-                bounds = src.bounds  # left, bottom, right, top
-
+                preview = file_info.get("preview", None)
+                if preview is not None:
+                    img_array = preview.get("img_array", None)
+                    bounds = preview.get("bounds", None)
+                    if img_array is not None:
+                        img_url = numpy_array_to_data_uri(img_array)
                 # BitmapLayerを作成
                 bitmap_layer = pdk.Layer(
                     "BitmapLayer",
@@ -602,7 +575,6 @@ def display_dashboard():
                     bounds=[[bounds.left, bounds.bottom], [bounds.right, bounds.top]]
                 )
                 map_layers.append(bitmap_layer)
-                src.close()
             except Exception as e:
                 st.sidebar.error(f"TIFFファイル {file_name} の読み込みエラー: {e}")
 
