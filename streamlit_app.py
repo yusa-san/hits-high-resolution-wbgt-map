@@ -209,10 +209,9 @@ def file_selection_screen():
                                     bounds = src.bounds  # left, bottom, right, top
                                     image_data = src.read()  # shape: (bands, height, width)
                                     gray = image_data[0]
-                                    file_info["preview"] = {"img_array": gray, "bounds": [[bounds.left, bounds.bottom], [bounds.right, bounds.top]]}
-                                    file_info["loaded"] = True
+                                    preview = {"img_array": gray, "bounds": [[bounds.left, bounds.bottom], [bounds.right, bounds.top]]}
                             st.success(f"{file_name} の読み込みが完了しました。")
-                            st.session_state["url_entries"][i]["preview"] = meta
+                            st.session_state["url_entries"][i]["preview"] = preview
                         else:
                             st.error(f"対応していない拡張子です: {ext}")
                             st.stop()
