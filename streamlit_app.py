@@ -446,12 +446,12 @@ def display_dashboard():
                 st.sidebar.write(f"lat_col: {lat_col} lon_col: {lon_col}")
                 if df is not None:
                     st.sidebar.write(df.describe())
-                    # 大きなデータの場合はサンプルを抽出（例：50,000行）
-                    if len(df) > 110000:
-                        df_sample = df.sample(n=110000, random_state=42)
-                        st.sidebar.warning(f"{file_name}を110000行にサンプル済み")
-                    else:
-                        df_sample = df
+                    # 大きなデータの場合はサンプルを抽出
+                    # if len(df) > 110000:
+                        # df_sample = df.sample(n=110000, random_state=42)
+                        # st.sidebar.warning(f"{file_name}を110000行にサンプル済み")
+                    # else:
+                    df_sample = df
                 if lat_col in df_sample.columns and lon_col in df_sample.columns:
                     all_lat.extend(df_sample[lat_col].dropna().tolist())
                     all_lon.extend(df_sample[lon_col].dropna().tolist())
