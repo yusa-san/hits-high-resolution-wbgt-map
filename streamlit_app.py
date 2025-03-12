@@ -363,7 +363,7 @@ def file_selection_screen():
                     st.success(f"{file_name} の色分け用バンドを{band_default} に設定しました。")
 
     # urlがないurl_entriesの要素を削除
-    st.session_state["url_entries"] = [entry for entry in st.session_state["url_entries"] if entry["url"] is not None else None]
+    st.session_state["url_entries"] = [entry for entry in st.session_state["url_entries"] if entry["url"] is not None]
 
     # 選択されたファイルの一覧
     st.write("### 選択されたファイル一覧:")
