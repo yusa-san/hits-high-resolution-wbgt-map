@@ -396,7 +396,7 @@ def numpy_array_to_data_uri(img_array):
     buffer = BytesIO()
     img.save(buffer, format="PNG")
     encoded = base64.b64encode(buffer.getvalue()).decode("utf-8")
-    return f"image/png;base64,{encoded}"
+    return f"data:image/png;base64,{encoded}"
 
 def display_dashboard():
     st.header("ダッシュボード表示画面")
@@ -577,7 +577,7 @@ def display_dashboard():
                 bitmap_layer = pdk.Layer(
                     "BitmapLayer",
                     data=None,
-                    image=img_url,
+                    image=f'{img_url}',
                     bounds=[[bounds_left, bounds_bottom], [bounds_right, bounds_top]]
                 )
                 map_layers.append(bitmap_layer)
