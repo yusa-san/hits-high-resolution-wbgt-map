@@ -251,15 +251,13 @@ def file_selection_screen():
     #    最後のエントリがloaded=Trueになったら、新規URL入力欄を追加する
     last_index = len(st.session_state["url_entries"]) - 1
     if st.session_state["url_entries"][last_index]["loaded"]:
-        # すでに別のURL欄が追加済みでなければ追加
-        # （例：連続再実行で2つ以上増えないようにチェックする）
-        # 下のように単純に追加すると、読み込むたび無限に増えるので
-        # 「まだ空のURL欄を持つエントリが存在しない場合のみ追加」などのチェックを入れる
+        # すでに別のURL欄が追加済みでなければ追加（例：連続再実行で2つ以上増えないようにチェックする）
+        # 下のように単純に追加すると、読み込むたび無限に増えるので「まだ空のURL欄を持つエントリが存在しない場合のみ追加」などのチェックを入れる
         empty_urls = [
             ent for ent in st.session_state["url_entries"] 
             if ent["url"] == "" and not ent["loaded"]
         ]
-        if not empty_urls and st.button("URL入力欄追加", key=f"add_url_input"):
+        if not empty_urls and st.button("URL入力欄追加", key=f"add_url_input_{last_index}"):
             st.session_state["url_entries"].append(
                 {
                     "source": "url",
@@ -272,6 +270,7 @@ def file_selection_screen():
                     "preview": None,
                 }
             )
+            st.rerun()
 
     # 3. ファイルアップローダーからの入力
     # セッション変数 "upload_entries" の初期化（存在しなければ）
