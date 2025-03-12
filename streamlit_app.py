@@ -567,12 +567,17 @@ def display_dashboard():
                     bounds = preview.get("bounds", None)
                     if img_array is not None:
                         img_url = numpy_array_to_data_uri(img_array)
+                    if bounds is not None:
+                        bounds_left = bounds[0][0]
+                        bounds_bottom = bounds[0][1]
+                        bounds_right = bounds[1][0]
+                        bounds_top = bounds[1][1]
                 # BitmapLayerを作成
                 bitmap_layer = pdk.Layer(
                     "BitmapLayer",
                     data=None,
                     image=img_url,
-                    bounds=[[bounds.left, bounds.bottom], [bounds.right, bounds.top]]
+                    bounds=[[bounds_left, bounds_bottom], [bounds_right, bounds_top]]
                 )
                 map_layers.append(bitmap_layer)
                 st.write(f"TIFFファイル {file_name} をマップレイヤーに追加しました。")
