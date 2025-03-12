@@ -259,7 +259,7 @@ def file_selection_screen():
             ent for ent in st.session_state["url_entries"] 
             if ent["url"] == "" and not ent["loaded"]
         ]
-        if not empty_urls:
+        if not empty_urls and st.button("URL入力欄追加", key=f"add_url_input"):
             st.session_state["url_entries"].append(
                 {
                     "source": "url",
