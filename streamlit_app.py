@@ -262,7 +262,7 @@ def file_selection_screen():
                 {
                     "source": "url",
                     "name": "",
-                    "url": None,
+                    "url": "",
                     "loaded": False,
                     "lat_col": "lat",
                     "lon_col": "lon",
@@ -362,9 +362,6 @@ def file_selection_screen():
                     )
                     st.success(f"{file_name} の色分け用バンドを{band_default} に設定しました。")
 
-    # urlがないurl_entriesの要素を削除
-    st.session_state["url_entries"] = [entry for entry in st.session_state["url_entries"] if entry["url"] is not None]
-
     # 選択されたファイルの一覧
     st.write("### 選択されたファイル一覧:")
     # print(st.session_state)
@@ -404,6 +401,9 @@ def display_dashboard():
     st.sidebar.header("レイヤーパネル")
     layer_visibility = {}
     for file_info in all_entries:
+        if file_info.get("source", "") == "url":
+            if file_info.get("loaded", False):
+                continue
         file_name = file_info.get("name", "")
         layer_visibility[file_name] = st.sidebar.checkbox(f"{file_name} を表示", value=True)
 
