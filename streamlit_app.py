@@ -563,7 +563,6 @@ def display_dashboard():
                             get_fill_color="properties.get_color",
                             pickable=True,
                             auto_highlight=True,
-                            get_radius=radius,
                         )
                     map_layers.append(geojson_layer)
                 else:
