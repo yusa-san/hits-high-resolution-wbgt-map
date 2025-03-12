@@ -546,7 +546,7 @@ def display_dashboard():
                         # CSVの場合にはポイントのサイズ
                         radius = st.sidebar.text_input(f"半径", value=30, key=f"radius_key_{file_name}")
                         # Pointの場合にはScatterplotLayer
-                        layer = pdk.Layer(
+                        geojson_layer = pdk.Layer(
                             "ScatterplotLayer",
                             data=gdf_sample,
                             get_position="geometry.coordinates",
@@ -556,15 +556,15 @@ def display_dashboard():
                             auto_highlight=True,
                         )
                     else:
-                    geojson_data = gdf_sample.__geo_interface__
-                    geojson_layer = pdk.Layer(
-                        "GeoJsonLayer",
-                        data=geojson_data,
-                        get_fill_color="properties.get_color",
-                        pickable=True,
-                        auto_highlight=True,
-                        get_radius=radius,
-                    )
+                        geojson_data = gdf_sample.__geo_interface__
+                        geojson_layer = pdk.Layer(
+                            "GeoJsonLayer",
+                            data=geojson_data,
+                            get_fill_color="properties.get_color",
+                            pickable=True,
+                            auto_highlight=True,
+                            get_radius=radius,
+                        )
                     map_layers.append(geojson_layer)
                 else:
                     st.sidebar.warning(f"GeoJSONファイル {file_name} の読み込みに失敗しました。")
