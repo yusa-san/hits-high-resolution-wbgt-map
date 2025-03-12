@@ -466,7 +466,7 @@ def display_dashboard():
                             ["terrain", "Reds", "Blues", "Greens", "cividis", "magma", "viridis", "twilight", "cool", "coolwarm", "spring", "summer", "autumn", "winter"],
                             key=f"cmap_{file_info.get('name')}"
                         )
-                        cmap = cm.get_cmap(cmap_choice)
+                        cmap = plt.get_cmap(cmap_choice)
                         unique_vals = df_sample[color_attr].unique()
                         if np.issubdtype(unique_vals.dtype, np.number):
                             norm = mcolors.Normalize(vmin=unique_vals.min(), vmax=unique_vals.max())
@@ -539,7 +539,7 @@ def display_dashboard():
                             ["terrain", "Reds", "Blues", "Greens", "cividis", "magma", "viridis", "twilight", "cool", "coolwarm", "spring", "summer", "autumn", "winter"],
                             key=f"cmap_{file_info.get('name')}"
                         )
-                        cmap = cm.get_cmap(cmap_choice)
+                        cmap = plt.get_cmap(cmap_choice)
                         unique_vals = gdf_sample[color_attr].unique()
                         if np.issubdtype(unique_vals.dtype, np.number):
                             norm = mcolors.Normalize(vmin=unique_vals.min(), vmax=unique_vals.max())
