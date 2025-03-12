@@ -542,8 +542,6 @@ def display_dashboard():
                     all_lat.append(center_lat)
                     all_lon.append(center_lon)
                     geojson_data = gdf_sample.__geo_interface__
-                    all_lat.extend(df_sample[lat_col].dropna().tolist())
-                    all_lon.extend(df_sample[lon_col].dropna().tolist())
                     geojson_layer = pdk.Layer(
                         "GeoJsonLayer",
                         data=geojson_data,
