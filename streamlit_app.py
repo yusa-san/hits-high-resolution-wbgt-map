@@ -565,7 +565,7 @@ def display_dashboard():
                     if gdf_sample.geometry.geom_type.iloc[0] == "Point":
                         if st.button("アイコンで表示", key=f"icon_button_{file_name}"):
                             # アイコンのアトラス（1枚の画像に複数のアイコンが含まれる画像）と、アイコンのマッピング情報を設定
-                            icon_atlas = "https://raw.githubusercontent.com/visgl/deck.gl-data/master/website/icon-atlas.png"
+                            icon_atlas = "./resource/icon-atlas.png"
                             icon_mapping = {
                                 "marker": {"x": 0, "y": 0, "width": 128, "height": 128, "mask": True},
                             }
