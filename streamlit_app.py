@@ -486,7 +486,7 @@ def display_dashboard():
                     # サイズ
                     radius = st.sidebar.text_input(f"半径", value=30, key=f"radius_key_{file_name}")
                     # アイコンで表示かポイントで表示かを選択
-                    if st.sidebar.selectbox("アイコンで表示する場合はチェックボックス", ["アイコンで表示"], key=f"icon_button_{file_name}"):
+                    if st.sidebar.checkbox("アイコンで表示", value=False):
                         # アイコンのアトラス（1枚の画像に複数のアイコンが含まれる画像）と、アイコンのマッピング情報を設定
                         icon_atlas = "https://raw.githubusercontent.com/visgl/deck.gl-data/master/website/icon-atlas.png"
                         icon_mapping = {
