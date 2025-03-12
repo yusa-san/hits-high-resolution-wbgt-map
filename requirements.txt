@@ -13,3 +13,4 @@ plotly
 pydeck
 streamlit-sortables
 pillow
+pyarrow
