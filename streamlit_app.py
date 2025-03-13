@@ -678,7 +678,7 @@ def display_dashboard():
     plotly_fig = None
     plotly_fig1 = None
     plotly_fig2 = None
-    if "all_entries" not in st.session_state or len(st.session_state["all_entries"]) == 0:
+    if len(all_entries) == 0:
         st.error("表示するファイルがありません。")
     else:
         # 1. 対象ファイルの選択
@@ -686,7 +686,7 @@ def display_dashboard():
         file_choice = st.selectbox("ファイルを選択", options=file_options)
         # 選択された file_info を取得
         file_info = next(fi for fi in st.session_state["all_entries"] if fi.get("name") == file_choice)
-        df = file_info.get("preview")
+        df = file_info.get("preview", None)
         if df is None:
             st.error("選択されたファイルのプレビューがありません。")
         elif isinstance(df, pd.DataFrame) or isinstance(df, gpd.GeoDataFrame):
