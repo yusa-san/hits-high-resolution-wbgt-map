@@ -156,13 +156,12 @@ def file_selection_screen():
             st.error("同じURLが既に入力されています。")
             continue
         
-        # URL入力欄をマスク
-        st.rerun()
-
         # “読み込み”ボタン
         if not entry["loaded"] and st.button("読み込み", key=f"load_url_{i}"):
             # URLをセッションステートにも反映
             st.session_state["url_entries"][i]["url"] = url_input
+            # URL入力欄をマスク
+            st.rerun()
             if url_input:
                 file_name = url_input.split("/")[-1]
                 st.session_state["url_entries"][i]["name"] = file_name
