@@ -5,4 +5,4 @@ maxMessageSize = 300
 backgroundColor = "#fae8ea"
 font = "BIZ UDPGothic"
 textColor = "#333333"
-sidebar = { "backgroundColor": "#F1A7AC"}
+secondaryBackgroundColor = "#F1A7AC"
