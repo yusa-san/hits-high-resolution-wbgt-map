@@ -678,12 +678,13 @@ def display_dashboard():
     plotly_fig = None
     plotly_fig1 = None
     plotly_fig2 = None
+    st.sidebar.write("グラフの条件設定")
     if len(all_entries) == 0:
-        st.error("表示するファイルがありません。")
+        st.sidebar.error("表示するファイルがありません。")
     else:
         # 1. 対象ファイルの選択
         file_options = [fi["name"] for fi in all_entries if "name" in fi]
-        file_choice = st.selectbox("ファイルを選択", options=file_options)
+        file_choice = st.sidebar.selectbox("ファイルを選択", options=file_options)
         # 選択された file_info を取得
         file_info = next(fi for fi in all_entries if fi.get("name") == file_choice)
         df = file_info.get("preview", None)
@@ -692,11 +693,11 @@ def display_dashboard():
         elif isinstance(df, pd.DataFrame) or isinstance(df, gpd.GeoDataFrame):
             # 2. 2つのカラムの選択（df.columns から）
             cols = df.columns.tolist()
-            col1 = st.selectbox("1つ目のカラムを選択", options=cols, key="plot_col1")
-            col2 = st.selectbox("2つ目のカラムを選択", options=cols, key="plot_col2")
+            col1 = st.sidebar.selectbox("1つ目のカラムを選択", options=cols, key="plot_col1")
+            col2 = st.sidebar.selectbox("2つ目のカラムを選択", options=cols, key="plot_col2")
             
             # 3. グラフの種類の選択
-            graph_type = st.selectbox("グラフの種類を選択", options=["散布図", "クロス集計の積み上げ棒グラフ（縦）", "各カラムの円グラフ"])
+            graph_type = st.sidebar.selectbox("グラフの種類を選択", options=["散布図", "クロス集計の積み上げ棒グラフ（縦）", "各カラムの円グラフ"])
             
             # 4. カテゴリ数が多い場合のグループ化処理
             def group_categories(series, max_categories=5):
