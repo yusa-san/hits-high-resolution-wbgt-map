@@ -149,7 +149,7 @@ def file_selection_screen():
         url_input = st.text_input(
             "URLを入力してください",
             key=f"url_input_{i}",  # キーをユニークに
-            value=entry["url"]
+            value="" if entry["url"] == "" else "URL入力済",
         )
         if url_input in [ent["url"] for ent in st.session_state["url_entries"][:i]]:
             st.error("同じURLが既に入力されています。")
