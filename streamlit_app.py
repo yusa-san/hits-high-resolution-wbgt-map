@@ -750,7 +750,7 @@ def display_dashboard():
             st.info("表示するグラフデータがありません。")
 
 def main():
-    st.image("header.png", use_container_width=False)
+    st.image("header.png", use_container_width=True)
     st.title("高解像度熱中症リスクダッシュボード by HITS")
     
     tab1, tab2 = st.tabs(["ファイル選択", "ダッシュボード表示"])
