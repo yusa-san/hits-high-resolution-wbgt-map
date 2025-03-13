@@ -477,7 +477,7 @@ def display_dashboard():
                     else:
                         get_color_expr = [200,30,0,160]
                     # サイズ
-                    radius = st.sidebar.text_input(f"半径", value=30, key=f"radius_key_{file_name}")
+                    radius = st.sidebar.text_input(f"半径", value=10, key=f"radius_key_{file_name}")
                     # アイコンで表示かポイントで表示かを選択
                     # if st.sidebar.checkbox("アイコンで表示", value=False):
                     #     # アイコンのアトラス（1枚の画像に複数のアイコンが含まれる画像）と、アイコンのマッピング情報を設定
