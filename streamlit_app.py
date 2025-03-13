@@ -507,7 +507,7 @@ def display_dashboard():
                             key=f"cmap_{file_info.get('name')}"
                         )
                         cmap = plt.get_cmap(cmap_choice)
-                        unique_vals = df_sample[color_attr].unique()
+                        unique_vals = df_sample[color_attr].dropna().unique()
                         if np.issubdtype(unique_vals.dtype, np.number):
                             norm = mcolors.Normalize(vmin=unique_vals.min(), vmax=unique_vals.max())
                             df_sample["get_color"] = df_sample[color_attr].apply(
