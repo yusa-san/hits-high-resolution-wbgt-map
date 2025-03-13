@@ -682,10 +682,10 @@ def display_dashboard():
         st.error("表示するファイルがありません。")
     else:
         # 1. 対象ファイルの選択
-        file_options = [fi["name"] for fi in st.session_state["all_entries"] if "name" in fi]
+        file_options = [fi["name"] for fi in all_entries if "name" in fi]
         file_choice = st.selectbox("ファイルを選択", options=file_options)
         # 選択された file_info を取得
-        file_info = next(fi for fi in st.session_state["all_entries"] if fi.get("name") == file_choice)
+        file_info = next(fi for fi in all_entries if fi.get("name") == file_choice)
         df = file_info.get("preview", None)
         if df is None:
             st.error("選択されたファイルのプレビューがありません。")
