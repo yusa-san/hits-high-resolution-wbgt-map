@@ -674,6 +674,10 @@ def display_dashboard():
         deck_chart = None
 
     # --- Plotly 用：複数ファイルのグラフ作成 ---
+    # Plotly 用グラフ用変数を初期化
+    plotly_fig = None
+    plotly_fig1 = None
+    plotly_fig2 = None
     if "all_entries" not in st.session_state or len(st.session_state["all_entries"]) == 0:
         st.error("表示するファイルがありません。")
     else:
@@ -686,8 +690,6 @@ def display_dashboard():
         if df is None:
             st.error("選択されたファイルのプレビューがありません。")
         elif isinstance(df, pd.DataFrame) or isinstance(df, gpd.GeoDataFrame):
-            # Plotly 用グラフ用変数を初期化
-            plotly_fig = None
             # 2. 2つのカラムの選択（df.columns から）
             cols = df.columns.tolist()
             col1 = st.selectbox("1つ目のカラムを選択", options=cols, key="plot_col1")
