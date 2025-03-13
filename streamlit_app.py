@@ -24,8 +24,6 @@ import pyarrow as pa
 st.set_page_config(layout="wide")
 
 def file_selection_screen():
-    st.header("ファイル選択")
-
     # 全体の再読み込みボタン
     if st.button("ページのリロード"):
         st.rerun()
@@ -434,10 +432,10 @@ def display_dashboard():
         if ext == ".csv":
             try:
                 df = file_info.get("preview", None)
-                st.sidebar.write(f"file_name: {file_info.get('name', None)}")
+                # st.sidebar.write(f"file_name: {file_info.get('name', None)}")
                 lat_col = file_info.get("lat_col", "lat")
                 lon_col = file_info.get("lon_col", "lon")
-                st.sidebar.write(f"lat_col: {lat_col} lon_col: {lon_col}")
+                # st.sidebar.write(f"lat_col: {lat_col} lon_col: {lon_col}")
                 if df is not None:
                     st.sidebar.write(df.describe())
                     # 大きなデータの場合はサンプルを抽出
