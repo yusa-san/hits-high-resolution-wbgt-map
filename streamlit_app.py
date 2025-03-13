@@ -151,9 +151,13 @@ def file_selection_screen():
             key=f"url_input_{i}",  # キーをユニークに
             value="" if entry["url"] == "" else "URL入力済",
         )
+        # 重複チェック
         if url_input in [ent["url"] for ent in st.session_state["url_entries"][:i]]:
             st.error("同じURLが既に入力されています。")
             continue
+        
+        # URL入力欄をマスク
+        st.rerun()
 
         # “読み込み”ボタン
         if not entry["loaded"] and st.button("読み込み", key=f"load_url_{i}"):
