@@ -414,7 +414,7 @@ def display_dashboard():
     # st.sidebar.write(all_entries)
 
     # レイヤーパネル
-    st.sidebar.header("表示するファイルにチェック")
+    st.sidebar.subheader("表示するファイルにチェック")
     layer_visibility = {}
     for file_info in all_entries:
         if file_info.get("source", "") == "url":
@@ -676,7 +676,7 @@ def display_dashboard():
     plotly_fig = None
     plotly_fig1 = None
     plotly_fig2 = None
-    st.sidebar.write("グラフの設定")
+    st.sidebar.header("グラフの設定")
     if len(all_entries) == 0:
         st.sidebar.error("表示するファイルがありません。")
     else:
