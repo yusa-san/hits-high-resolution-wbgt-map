@@ -489,7 +489,7 @@ def display_dashboard():
                     # アイコンで表示かポイントで表示かを選択
                     if st.sidebar.checkbox("アイコンで表示", value=False):
                         # アイコンのアトラス（1枚の画像に複数のアイコンが含まれる画像）と、アイコンのマッピング情報を設定
-                        icon_atlas = "https://raw.githubusercontent.com/visgl/deck.gl-data/master/website/icon-atlas.png"
+                        icon_atlas = "./resource/icon-atlas.png"
                         icon_mapping = {
                             "marker": {"x": 0, "y": 0, "width": 128, "height": 128, "mask": True},
                         }
