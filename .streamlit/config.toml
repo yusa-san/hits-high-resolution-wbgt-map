@@ -2,7 +2,9 @@
 maxMessageSize = 300
 
 [theme]
+base = "light"
+primaryColor = "#F1A7AC"
 backgroundColor = "#fae8ea"
+secondaryBackgroundColor = "#ffffff"
 font = "BIZ UDPGothic"
 textColor = "#333333"
-secondaryBackgroundColor = "#F1A7AC"
