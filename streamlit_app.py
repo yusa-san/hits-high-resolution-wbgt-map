@@ -23,6 +23,18 @@ import pyarrow as pa
 
 st.set_page_config(layout="wide")
 
+# カスタムCSSでサイドバーを下にずらす
+st.markdown(
+    """
+    <style>
+    [data-testid="stSidebar"] {
+        margin-top: 300px;
+    }
+    </style>
+    """,
+    unsafe_allow_html=True
+)
+
 def file_selection_screen():
     # 全体の再読み込みボタン
     if st.button("ページのリロード"):
