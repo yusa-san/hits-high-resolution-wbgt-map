@@ -734,8 +734,9 @@ def display_dashboard():
             graph_type = st.sidebar.selectbox("グラフの種類を選択", options=["散布図", "積み上げ縦棒グラフ", "円グラフ"])
             # カラムの選択
             cols = df.columns.tolist() + [None]
-            col1 = st.sidebar.selectbox("1つ目のカラムを選択", options=cols, key="plot_col1")
-            col2 = st.sidebar.selectbox("2つ目のカラムを選択(オプション)", options=cols, key="plot_col2")
+            default_index = len(cols) - 1
+            col1 = st.sidebar.selectbox("1つ目のカラムを選択", options=cols, key="plot_col1", index=default_index)
+            col2 = st.sidebar.selectbox("2つ目のカラムを選択(オプション)", options=cols, key="plot_col2", index=default_index)
             # グラフ作成
             if graph_type == "散布図":
                 try:
