@@ -160,8 +160,6 @@ def file_selection_screen():
         if not entry["loaded"] and st.button("読み込み", key=f"load_url_{i}"):
             # URLをセッションステートにも反映
             st.session_state["url_entries"][i]["url"] = url_input
-            # URL入力欄をマスク
-            st.rerun()
             if url_input:
                 file_name = url_input.split("/")[-1]
                 st.session_state["url_entries"][i]["name"] = file_name
@@ -220,6 +218,8 @@ def file_selection_screen():
                             st.stop()
                     # ロード完了フラグ
                     st.session_state["url_entries"][i]["loaded"] = True
+                    # URL入力欄をマスク
+                    st.rerun()
                 except Exception as e:
                     st.error(f"ファイル読み込みエラー ({file_name}): {e}")
         # 3_既に読み込み済みならプレビュー表示 & カラム指定表示
