@@ -396,6 +396,197 @@ def numpy_array_to_data_uri(img_array):
     encoded = base64.b64encode(buffer.getvalue()).decode("utf-8")
     return f"data:image/png;base64,{encoded}"
 
+# --- CSVファイル処理 ---
+@st.cache_data(show_spinner=False)
+def process_csv_file(file_info, layer_visibility):
+    map_layers = []
+    all_lat = []
+    all_lon = []
+    file_name = file_info.get("name", "")
+    
+    # レイヤー非表示の場合は処理をスキップ
+    if file_name and not layer_visibility.get(file_name, True):
+        return map_layers, all_lat, all_lon
+
+    st.sidebar.write(f"選択されたファイル: {file_name}")
+    try:
+        df = file_info.get("preview", None)
+        lat_col = file_info.get("lat_col", "lat")
+        lon_col = file_info.get("lon_col", "lon")
+        if df is None:
+            return map_layers, all_lat, all_lon
+
+        st.sidebar.write(df.describe())
+        # 大きなデータの場合はサンプル抽出する処理を入れてもよい
+        df_sample = df  
+        
+        if lat_col in df_sample.columns and lon_col in df_sample.columns:
+            all_lat.extend(df_sample[lat_col].dropna().tolist())
+            all_lon.extend(df_sample[lon_col].dropna().tolist())
+            
+            # カラム選択（None も選択可能）
+            columns_list = df_sample.columns.tolist() + [None]
+            color_attr = st.sidebar.selectbox("色分けに用いるカラム", columns_list,
+                                              format_func=lambda x: "None" if x is None else x)
+            
+            if color_attr and color_attr in df_sample.columns:
+                cmap_choice = st.sidebar.selectbox(
+                    "カラーマップを選択",
+                    ["terrain", "Reds", "Blues", "Greens", "cividis", "magma", "viridis", "twilight",
+                     "cool", "coolwarm", "spring", "summer", "autumn", "winter"],
+                    key=f"cmap_{file_name}"
+                )
+                cmap = plt.get_cmap(cmap_choice)
+                unique_vals = df_sample[color_attr].unique()
+                if np.issubdtype(unique_vals.dtype, np.number):
+                    norm = mcolors.Normalize(vmin=unique_vals.min(), vmax=unique_vals.max())
+                    df_sample["get_color"] = df_sample[color_attr].apply(
+                        lambda x: [int(c*255) for c in cmap(norm(x))[:3]] + [160]
+                    )
+                else:
+                    categories = sorted(unique_vals)
+                    n = len(categories)
+                    mapping = {cat: cmap(i/(n-1) if n > 1 else 0.5) for i, cat in enumerate(categories)}
+                    df_sample["get_color"] = df_sample[color_attr].apply(
+                        lambda x: [int(c*255) for c in mapping[x][:3]] + [160]
+                    )
+                get_color_expr = "get_color"
+            else:
+                get_color_expr = [200, 30, 0, 160]
+            
+            radius = st.sidebar.text_input("半径", value=10, key=f"radius_key_{file_name}")
+            csv_layer = pdk.Layer(
+                "ScatterplotLayer",
+                data=df_sample,
+                get_position=[lon_col, lat_col],
+                get_fill_color=get_color_expr,
+                get_radius=radius,
+                pickable=True,
+                auto_highlight=True,
+            )
+            map_layers.append(csv_layer)
+        else:
+            st.sidebar.warning(f"CSVファイル {file_name} に指定された緯度/経度カラムが見つかりません。")
+    except Exception as e:
+        st.sidebar.error(f"CSVファイル {file_name} のマップレイヤー生成エラー: {e}")
+    
+    return map_layers, all_lat, all_lon
+
+
+# --- GeoJSONファイル処理 ---
+@st.cache_data(show_spinner=False)
+def process_geojson_file(file_info):
+    map_layers = []
+    all_lat = []
+    all_lon = []
+    file_name = file_info.get("name", "")
+    st.sidebar.write(f"選択されたファイル: {file_name}")
+    
+    try:
+        gdf = file_info.get("preview", None)
+        if gdf is None:
+            st.sidebar.warning(f"GeoJSONファイル {file_name} の読み込みに失敗しました。")
+            return map_layers, all_lat, all_lon
+
+        st.sidebar.write(gdf.describe())
+        # 必要に応じてサンプル抽出
+        gdf_sample = gdf
+        geojson_data = gdf_sample.__geo_interface__
+        
+        columns_list = gdf_sample.columns.tolist() + [None]
+        color_attr = st.sidebar.selectbox("色分けに用いるカラム", columns_list,
+                                          format_func=lambda x: "None" if x is None else x)
+        
+        if color_attr and color_attr in gdf_sample.columns:
+            cmap_choice = st.sidebar.selectbox(
+                "カラーマップを選択",
+                ["terrain", "Reds", "Blues", "Greens", "cividis", "magma", "viridis", "twilight",
+                 "cool", "coolwarm", "spring", "summer", "autumn", "winter"],
+                key=f"cmap_{file_name}"
+            )
+            cmap = plt.get_cmap(cmap_choice)
+            unique_vals = gdf_sample[color_attr].dropna().unique()  # nullは除外
+            if np.issubdtype(unique_vals.dtype, np.number):
+                norm = mcolors.Normalize(vmin=unique_vals.min(), vmax=unique_vals.max())
+                for feature in geojson_data["features"]:
+                    if color_attr in feature["properties"]:
+                        val = feature["properties"][color_attr]
+                        if val is None:
+                            feature["properties"]["get_color"] = [200, 30, 0, 160]
+                            continue
+                        color = cmap(norm(val))
+                        feature["properties"]["get_color"] = [int(255 * color[i]) for i in range(3)] + [160]
+                    else:
+                        feature["properties"]["get_color"] = [200, 30, 0, 160]
+            else:
+                for feature in geojson_data["features"]:
+                    feature["properties"]["get_color"] = [200, 30, 0, 160]
+        
+        # 中心座標は全体の境界から計算
+        bounds = gdf_sample.total_bounds  # [minx, miny, maxx, maxy]
+        center_lat = (bounds[1] + bounds[3]) / 2
+        center_lon = (bounds[0] + bounds[2]) / 2
+        all_lat.append(center_lat)
+        all_lon.append(center_lon)
+        
+        # 幾何形状に応じたレイヤー作成
+        if gdf_sample.geometry.geom_type.iloc[0] == "Point":
+            radius = st.sidebar.text_input("半径", value=30, key=f"radius_key_{file_name}")
+            geojson_layer = pdk.Layer(
+                "ScatterplotLayer",
+                data=gdf_sample,
+                get_position="geometry.coordinates",
+                get_fill_color="properties.get_color",
+                get_radius=radius,
+                pickable=True,
+                auto_highlight=True,
+            )
+            map_layers.append(geojson_layer)
+        else:
+            geojson_layer = pdk.Layer(
+                "GeoJsonLayer",
+                data=geojson_data,
+                get_fill_color="properties.get_color",
+                pickable=True,
+                auto_highlight=True,
+            )
+            map_layers.append(geojson_layer)
+    except Exception as e:
+        st.sidebar.error(f"GeoJSONファイル {file_name} のマップレイヤー生成エラー: {e}")
+    
+    return map_layers, all_lat, all_lon
+
+
+# --- TIFFファイル処理 ---
+@st.cache_data(show_spinner=False)
+def process_tiff_file(file_info):
+    map_layers = []
+    all_lat = []
+    all_lon = []
+    file_name = file_info.get("name", "")
+    st.sidebar.write(f"選択されたファイル: {file_name}")
+    
+    try:
+        preview = file_info.get("preview", None)
+        if preview is not None:
+            img_array = preview.get("img_array", None)
+            bounds = preview.get("bounds", None)
+            if img_array is not None:
+                img_url = numpy_array_to_data_uri(img_array)
+            if bounds is not None:
+                bounds_left = bounds[0][0]
+                bounds_bottom = bounds[0][1]
+                bounds_right = bounds[1][0]
+                bounds_top = bounds[1][1]
+            # ここでは TIFF 対応が未実装のため、警告表示
+            st.sidebar.warning(f"TIFFファイル {file_name} には対応していません。")
+        else:
+            st.sidebar.warning(f"TIFFファイル {file_name} の読み込みに失敗しました。")
+    except Exception as e:
+        st.sidebar.error(f"TIFFファイル {file_name} の読み込みエラー: {e}")
+    
+    return map_layers, all_lat, all_lon
+
 def display_dashboard():
     # すべてのエントリを統合
     all_entries = []
@@ -424,220 +615,23 @@ def display_dashboard():
     map_layers = []
     all_lat = []
     all_lon = []
-    # CSV・GeoJSON で、緯度・経度の情報が存在するものを対象とする
+    
     for file_info in all_entries:
-        fname = file_info.get("name", "")
-        # レイヤーパネルで非表示になっている場合はスキップ
-        if fname and not layer_visibility.get(fname, True):
-            continue
-        file_name = fname
+        file_name = file_info.get("name", "")
         ext = os.path.splitext(file_name)[1].lower()
-        st.sidebar.write(f"選択されたファイル{file_name}")
-        # CSVの場合：プレビューは file_info["preview"]（サンプリング済みであることを想定）
         if ext == ".csv":
-            try:
-                df = file_info.get("preview", None)
-                lat_col = file_info.get("lat_col", "lat")
-                lon_col = file_info.get("lon_col", "lon")
-                # st.sidebar.write(f"lat_col: {lat_col} lon_col: {lon_col}")
-                if df is not None:
-                    st.sidebar.write(df.describe())
-                    # 大きなデータの場合はサンプルを抽出
-                    # if len(df) > 110000:
-                        # df_sample = df.sample(n=110000, random_state=42)
-                        # st.sidebar.warning(f"{file_name}を110000行にサンプル済み")
-                    # else:
-                    df_sample = df
-                if lat_col in df_sample.columns and lon_col in df_sample.columns:
-                    all_lat.extend(df_sample[lat_col].dropna().tolist())
-                    all_lon.extend(df_sample[lon_col].dropna().tolist())
-                    # 属性カラムによる色分け
-                    columns_list = df_sample.columns.tolist()
-                    columns_list.extend([None])
-                    color_attr = st.sidebar.selectbox(f"色分けに用いるカラム", columns_list, format_func=lambda x: "None" if x is None else x)
-                    if color_attr and color_attr in df_sample.columns:
-                        # プルダウンでカラーマップを選択
-                        cmap_choice = st.sidebar.selectbox(
-                            "カラーマップを選択",
-                            ["terrain", "Reds", "Blues", "Greens", "cividis", "magma", "viridis", "twilight", "cool", "coolwarm", "spring", "summer", "autumn", "winter"],
-                            key=f"cmap_{file_info.get('name')}"
-                        )
-                        cmap = plt.get_cmap(cmap_choice)
-                        unique_vals = df_sample[color_attr].unique()
-                        if np.issubdtype(unique_vals.dtype, np.number):
-                            norm = mcolors.Normalize(vmin=unique_vals.min(), vmax=unique_vals.max())
-                            df_sample["get_color"] = df_sample[color_attr].apply(
-                                lambda x: [int(c*255) for c in cmap(norm(x))[:3]] + [160]
-                            )
-                        else:
-                            categories = sorted(unique_vals)
-                            n = len(categories)
-                            mapping = {cat: cmap(i/(n-1) if n>1 else 0.5) for i, cat in enumerate(categories)}
-                            df_sample["get_color"] = df_sample[color_attr].apply(
-                                lambda x: [int(c*255) for c in mapping[x][:3]] + [160]
-                            )
-                        get_color_expr = "get_color"
-                    else:
-                        get_color_expr = [200,30,0,160]
-                    # サイズ
-                    radius = st.sidebar.text_input(f"半径", value=10, key=f"radius_key_{file_name}")
-                    # アイコンで表示かポイントで表示かを選択
-                    # if st.sidebar.checkbox("アイコンで表示", value=False):
-                    #     # アイコンのアトラス（1枚の画像に複数のアイコンが含まれる画像）と、アイコンのマッピング情報を設定
-                    #     icon_atlas = "./resource/icon-atlas.png"
-                    #     icon_mapping = {
-                    #         "marker": {"x": 0, "y": 0, "width": 128, "height": 128, "mask": True},
-                    #     }
-                    #     icon_layer = pdk.Layer(
-                    #         "IconLayer",
-                    #         data=df_sample,
-                    #         get_icon="icon",
-                    #         get_position=[lon_col, lat_col],
-                    #         sizeScale=15,
-                    #         iconAtlas=icon_atlas,
-                    #         iconMapping=icon_mapping,
-                    #     )
-                    #     map_layers.append(icon_layer)
-                    # else:
-                    csv_layer = pdk.Layer(
-                        "ScatterplotLayer",
-                        data=df_sample,
-                        get_position=[lon_col, lat_col],
-                        get_fill_color=get_color_expr,
-                        get_radius=radius,
-                        pickable=True,
-                        auto_highlight=True,
-                    )
-                    map_layers.append(csv_layer)
-                else:
-                    st.sidebar.warning(f"CSVファイル {file_name} に指定された緯度/経度カラムが見つかりません。")
-            except Exception as e:
-                st.sidebar.error(f"CSVファイル {file_name} のマップレイヤー生成エラー: {e}")
-        # GeoJSONの場合
+            layers, lats, lons = process_csv_file(file_info, layer_visibility)
         elif ext == ".geojson":
-            try:
-                gdf = file_info.get("preview", None)
-                if gdf is not None:
-                    st.sidebar.write(gdf.describe())
-                    # 大きなデータの場合はサンプルを抽出
-                    # if len(gdf) > 50000:
-                    #     gdf_sample = gdf.sample(n=50000, random_state=42)
-                    #     st.sidebar.warning(f"{file_name}を50000行にサンプル済み")
-                    # else:
-                    gdf_sample = gdf
-                    geojson_data = gdf_sample.__geo_interface__
-                    # 属性カラムによる色分け
-                    columns_list = gdf_sample.columns.tolist()
-                    columns_list.extend([None])
-                    color_attr = st.sidebar.selectbox(f"色分けに用いるカラム", columns_list, format_func=lambda x: "None" if x is None else x)
-                    if color_attr and color_attr in gdf_sample.columns:
-                        # プルダウンでカラーマップを選択
-                        cmap_choice = st.sidebar.selectbox(
-                            "カラーマップを選択",
-                            ["terrain", "Reds", "Blues", "Greens", "cividis", "magma", "viridis", "twilight", "cool", "coolwarm", "spring", "summer", "autumn", "winter"],
-                            key=f"cmap_{file_info.get('name')}"
-                        )
-                        cmap = plt.get_cmap(cmap_choice)
-                        unique_vals = gdf_sample[color_attr].dropna().unique()  # nullは除外
-                        if np.issubdtype(unique_vals.dtype, np.number):
-                            norm = mcolors.Normalize(vmin=unique_vals.min(), vmax=unique_vals.max())
-                            # 各フィーチャーに対して、色を計算し、properties に "get_color" として保存
-                            for feature in geojson_data["features"]:
-                                if color_attr in feature["properties"]:
-                                    val = feature["properties"][color_attr]
-                                    if val is None:
-                                        feature["properties"]["get_color"] = [200, 30, 0, 160]
-                                        continue
-                                    color = cmap(norm(val))  # RGBA (0～1)
-                                    # 0～255 に変換し、alpha を固定(例: 160)
-                                    feature["properties"]["get_color"] = [int(255 * color[i]) for i in range(3)] + [160]
-                                else:
-                                    # color_attr がなければデフォルト色を設定
-                                    feature["properties"]["get_color"] = [200, 30, 0, 160]
-                        else:
-                            # 数値型でない場合は全てにデフォルト色を設定
-                            for feature in geojson_data["features"]:
-                                feature["properties"]["get_color"] = [200, 30, 0, 160]
-                    # 座標の中心は gdf の全体境界から計算
-                    bounds = gdf_sample.total_bounds  # [minx, miny, maxx, maxy]
-                    center_lat = (bounds[1] + bounds[3]) / 2
-                    center_lon = (bounds[0] + bounds[2]) / 2
-                    all_lat.append(center_lat)
-                    all_lon.append(center_lon)
-                    # ジオメトリの種類によって処理を分ける
-                    if gdf_sample.geometry.geom_type.iloc[0] == "Point":
-                    #     if st.button("アイコンで表示", key=f"icon_button_{file_name}"):
-                    #         # アイコンのアトラス（1枚の画像に複数のアイコンが含まれる画像）と、アイコンのマッピング情報を設定
-                    #         icon_atlas = "./resource/icon-atlas.png"
-                    #         icon_mapping = {
-                    #             "marker": {"x": 0, "y": 0, "width": 128, "height": 128, "mask": True},
-                    #         }
-
-                    #         icon_layer = pdk.Layer(
-                    #             "IconLayer",
-                    #             data=gdf_sample,
-                    #             get_icon="icon",
-                    #             get_position="geometry.coordinates",
-                    #             sizeScale=15,
-                    #             iconAtlas=icon_atlas,
-                    #             iconMapping=icon_mapping,
-                    #         )
-                    #         map_layers.append(icon_layer)
-                    #     elif st.button("ポイントで表示", key=f"point_button_{file_name}"):
-                        # CSVの場合にはポイントのサイズ
-                        radius = st.sidebar.text_input(f"半径", value=30, key=f"radius_key_{file_name}")
-                        # Pointの場合にはScatterplotLayer
-                        geojson_layer = pdk.Layer(
-                            "ScatterplotLayer",
-                            data=gdf_sample,
-                            get_position="geometry.coordinates",
-                            get_fill_color="properties.get_color",
-                            get_radius=radius,
-                            pickable=True,
-                            auto_highlight=True,
-                        )
-                        map_layers.append(geojson_layer)
-                    else:
-                        geojson_layer = pdk.Layer(
-                            "GeoJsonLayer",
-                            data=geojson_data,
-                            get_fill_color="properties.get_color",
-                            pickable=True,
-                            auto_highlight=True,
-                        )
-                        map_layers.append(geojson_layer)
-                else:
-                    st.sidebar.warning(f"GeoJSONファイル {file_name} の読み込みに失敗しました。")
-            except Exception as e:
-                st.sidebar.error(f"GeoJSONファイル {file_name} のマップレイヤー生成エラー: {e}")
-        # TIFFの場合
+            layers, lats, lons = process_geojson_file(file_info)
         elif ext in [".tiff", ".tif"]:
-            try:
-                preview = file_info.get("preview", None)
-                if preview is not None:
-                    img_array = preview.get("img_array", None)
-                    bounds = preview.get("bounds", None)
-                    if img_array is not None:
-                        img_url = numpy_array_to_data_uri(img_array)
-                        img_url_ = f'{img_url}'
-                    if bounds is not None:
-                        bounds_left = bounds[0][0]
-                        bounds_bottom = bounds[0][1]
-                        bounds_right = bounds[1][0]
-                        bounds_top = bounds[1][1]
-                # st.write(f"{img_url_}") # debug
-                # BitmapLayerを作成
-                # bitmap_layer = pdk.Layer(
-                #     "BitmapLayer",
-                #     data=None,
-                #     image=img_url_,
-                #     bounds=[[bounds_left, bounds_bottom], [bounds_right, bounds_top]]
-                # )
-                # map_layers.append(bitmap_layer)
-                # st.write(f"TIFFファイル {file_name} をマップレイヤーに追加しました。")
-                st.sidebar.warning(f"TIFFファイル {file_name} には対応していません。")
-            except Exception as e:
-                st.sidebar.error(f"TIFFファイル {file_name} の読み込みエラー: {e}")
+            layers, lats, lons = process_tiff_file(file_info)
+        else:
+            st.sidebar.warning(f"未対応のファイルタイプ: {file_name}")
+            layers, lats, lons = [], [], []
+        
+        map_layers.extend(layers)
+        all_lat.extend(lats)
+        all_lon.extend(lons)
 
     # 自動で中心とズームレベルを設定
     if all_lat and all_lon:
