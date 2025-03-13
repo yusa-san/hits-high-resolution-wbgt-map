@@ -674,30 +674,66 @@ def display_dashboard():
         deck_chart = None
 
     # --- Plotly 用：複数ファイルのグラフ作成 ---
-    # ここでは例として、各CSVファイルに "x" と "y" 列があると仮定し、散布図を作成
-    combined_df_list = []
-    for file_info in all_entries:
-        ext = os.path.splitext(file_info.get("name", ""))[1].lower()
-        if ext == ".csv":
-            try:
-                df = file_info.get("preview", None)
-                if df is not None and "x" in df.columns and "y" in df.columns:
-                    df_temp = df.copy()
-                    df_temp["source_file"] = file_info.get("name", "unknown")
-                    combined_df_list.append(df_temp)
-            except Exception as e:
-                st.error(f"CSVファイル {file_info.get('name')} のグラフ用データ読み込みエラー: {e}")
-    if combined_df_list:
-        combined_df = pd.concat(combined_df_list)
-        plotly_fig = px.scatter(
-            combined_df,
-            x="x",
-            y="y",
-            color="source_file",
-            title="複数ファイルの散布図"
-        )
+    if "all_entries" not in st.session_state or len(st.session_state["all_entries"]) == 0:
+        st.error("表示するファイルがありません。")
     else:
-        plotly_fig = None
+        # 1. 対象ファイルの選択
+        file_options = [fi["name"] for fi in st.session_state["all_entries"] if "name" in fi]
+        file_choice = st.selectbox("ファイルを選択", options=file_options)
+        # 選択された file_info を取得
+        file_info = next(fi for fi in st.session_state["all_entries"] if fi.get("name") == file_choice)
+        df = file_info.get("preview")
+        if df is None:
+            st.error("選択されたファイルのプレビューがありません。")
+        else:
+            # 2. 2つのカラムの選択（df.columns から）
+            cols = df.columns.tolist()
+            col1 = st.selectbox("1つ目のカラムを選択", options=cols, key="plot_col1")
+            col2 = st.selectbox("2つ目のカラムを選択", options=cols, key="plot_col2")
+            
+            # 3. グラフの種類の選択
+            graph_type = st.selectbox("グラフの種類を選択", options=["散布図", "クロス集計の積み上げ棒グラフ（縦）", "各カラムの円グラフ"])
+            
+            # 4. カテゴリ数が多い場合のグループ化処理
+            def group_categories(series, max_categories=5):
+                counts = series.value_counts()
+                if len(counts) > max_categories:
+                    top_categories = counts.index[:max_categories]
+                    return series.apply(lambda x: x if x in top_categories else "Other")
+                return series
+            
+            # 5. グラフ作成
+            if graph_type == "散布図":
+                try:
+                    df_numeric = df[[col1, col2]].apply(pd.to_numeric, errors="coerce")
+                    fig = px.scatter(df_numeric, x=col1, y=col2, title="散布図")
+                    st.plotly_chart(fig, use_container_width=True)
+                except Exception as e:
+                    st.error(f"散布図作成エラー: {e}")
+            elif graph_type == "クロス集計の積み上げ棒グラフ（縦）":
+                try:
+                    series1 = group_categories(df[col1], max_categories=5)
+                    series2 = group_categories(df[col2], max_categories=5)
+                    ctab = pd.crosstab(series1, series2)
+                    fig = go.Figure()
+                    for cat in ctab.columns:
+                        fig.add_trace(go.Bar(
+                            x=ctab.index,
+                            y=ctab[cat],
+                            name=str(cat)
+                        ))
+                    fig.update_layout(barmode='stack', title="クロス集計の積み上げ棒グラフ（縦）")
+                    st.plotly_chart(fig, use_container_width=True)
+                except Exception as e:
+                    st.error(f"積み上げ棒グラフ作成エラー: {e}")
+            elif graph_type == "各カラムの円グラフ":
+                try:
+                    fig1 = px.pie(df, names=group_categories(df[col1], max_categories=5), title=f"{col1} の分布")
+                    fig2 = px.pie(df, names=group_categories(df[col2], max_categories=5), title=f"{col2} の分布")
+                    st.plotly_chart(fig1, use_container_width=True)
+                    st.plotly_chart(fig2, use_container_width=True)
+                except Exception as e:
+                    st.error(f"円グラフ作成エラー: {e}")
 
     # --- 上下レイアウトで表示 ---
     top_container = st.container()
