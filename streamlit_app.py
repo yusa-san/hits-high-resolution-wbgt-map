@@ -27,7 +27,7 @@ def file_selection_screen():
     st.header("ファイル選択")
 
     # 全体の再読み込みボタン
-    if st.button("再読み込み"):
+    if st.button("ページのリロード"):
         st.rerun()
 
     # 1. Inputフォルダからの選択
@@ -35,7 +35,7 @@ def file_selection_screen():
     if "folder_entries" not in st.session_state:
         st.session_state["folder_entries"] = []
 
-    st.subheader("【1】Inputフォルダからファイル選択")
+    st.subheader("1. Inputフォルダからファイルを選択")
     input_folder = "input"
     if os.path.isdir(input_folder):
         folder_files = os.listdir(input_folder)
@@ -124,7 +124,7 @@ def file_selection_screen():
         st.info("Inputフォルダが存在しません。")
 
     # 2. URLからの入力
-    st.subheader("【2】URLからファイル入力")
+    st.subheader("2. URLからファイル入力")
 
     # 1_セッションステートの初期化
     if "url_entries" not in st.session_state:
@@ -284,7 +284,7 @@ def file_selection_screen():
     if "upload_entries" not in st.session_state:
         st.session_state["upload_entries"] = []
 
-    st.subheader("【3】ファイルアップローダー")
+    st.subheader("3. ファイルをアップロードして入力")
     uploaded_files = st.file_uploader("ファイルをアップロード", type=["csv", "geojson", "tiff", "tif"], accept_multiple_files=True, key="file_uploader")
     if uploaded_files:
         for uploaded_file in uploaded_files:
@@ -309,8 +309,6 @@ def file_selection_screen():
                     file_info["loaded"] = True
                 except Exception as e:
                     st.error(f"アップロードCSVプレビュー読み込みエラー ({file_name}): {e}")
-                # file_info['lat_col'] = st.text_input(f"{file_name} の緯度カラム", value=file_info["lat_col"], key=f"lat_column_{file_name}")
-                # file_info['lon_col'] = st.text_input(f"{file_name} の経度カラム", value=file_info["lon_col"], key=f"lon_column_{file_name}")
             elif ext == ".geojson":
                 try:
                     uploaded_file.seek(0)
@@ -367,23 +365,23 @@ def file_selection_screen():
                     st.success(f"{file_name} の色分け用バンドを{band_default} に設定しました。")
 
     # 選択されたファイルの一覧
-    st.write("### 選択されたファイル一覧:")
+    st.write("### 読み込み済みファイルの一覧:")
     # print(st.session_state)
     if "folder_entries" in st.session_state and st.session_state["folder_entries"]: # Inputフォルダからのファイル情報
         st.write("#### Inputフォルダ:")
         for file_info in st.session_state["folder_entries"]:
             st.write(f"{file_info.get('name', 'error:name')} ({file_info.get('source', 'error:source')})")
-            st.write(f"file_info: {file_info}")
+            # st.write(f"file_info: {file_info}")
     if "url_entries" in st.session_state and st.session_state["url_entries"]: # URL入力によるファイル情報
         st.write("#### URL入力:")
         for file_info in st.session_state["url_entries"]:
-            st.write(f"{file_info.get('url', 'error:url')} ({file_info.get('source', 'error:source')})")
-            st.write(f"file_info: {file_info}")
+            st.write(f"{file_info.get('name', 'error:name')} ({file_info.get('source', 'error:source')})")
+            # st.write(f"file_info: {file_info}")
     if "upload_entries" in st.session_state and st.session_state["upload_entries"]:  #アップロードによるファイル情報
         st.write("#### アップロード:")
         for file_info in st.session_state["upload_entries"]:
             st.write(f"{file_info.get('name', 'error:name')} ({file_info.get('source', 'error:source')})")
-            st.write(f"file_info: {file_info}")
+            # st.write(f"file_info: {file_info}")
 
 def load_tiff_preview_as_array(file_path): # 単一バンドのみに対応
     with rasterio.open(file_path) as src:
@@ -400,7 +398,7 @@ def numpy_array_to_data_uri(img_array):
     return f"data:image/png;base64,{encoded}"
 
 def display_dashboard():
-    st.header("ダッシュボード表示画面")
+    st.header("高解像度熱中症リスクダッシュボード by HITS")
     
     # すべてのエントリを統合
     all_entries = []
@@ -411,12 +409,12 @@ def display_dashboard():
     if "upload_entries" in st.session_state:
         all_entries.extend(st.session_state["upload_entries"])
 
-    st.sidebar.header("条件設定")
+    st.sidebar.header("ダッシュボードの設定")
     # st.sidebar.write("all_entries:")
     # st.sidebar.write(all_entries)
 
     # レイヤーパネル
-    st.sidebar.header("レイヤーパネル")
+    st.sidebar.header("表示するファイルにチェック")
     layer_visibility = {}
     for file_info in all_entries:
         if file_info.get("source", "") == "url":
@@ -678,7 +676,7 @@ def display_dashboard():
     plotly_fig = None
     plotly_fig1 = None
     plotly_fig2 = None
-    st.sidebar.write("グラフの条件設定")
+    st.sidebar.write("グラフの設定")
     if len(all_entries) == 0:
         st.sidebar.error("表示するファイルがありません。")
     else:
@@ -697,7 +695,7 @@ def display_dashboard():
             col2 = st.sidebar.selectbox("2つ目のカラムを選択", options=cols, key="plot_col2")
             
             # 3. グラフの種類の選択
-            graph_type = st.sidebar.selectbox("グラフの種類を選択", options=["散布図", "クロス集計の積み上げ棒グラフ（縦）", "各カラムの円グラフ"])
+            graph_type = st.sidebar.selectbox("グラフの種類を選択", options=["散布図", "積み上げ縦棒グラフ", "円グラフ"])
             
             # 4. カテゴリ数が多い場合のグループ化処理
             def group_categories(series, max_categories=5):
@@ -714,7 +712,7 @@ def display_dashboard():
                     plotly_fig = px.scatter(df_numeric, x=col1, y=col2, title="散布図")
                 except Exception as e:
                     st.error(f"散布図作成エラー: {e}")
-            elif graph_type == "クロス集計の積み上げ棒グラフ（縦）":
+            elif graph_type == "積み上げ縦棒グラフ":
                 try:
                     series1 = group_categories(df[col1], max_categories=5)
                     series2 = group_categories(df[col2], max_categories=5)
@@ -726,11 +724,11 @@ def display_dashboard():
                             y=ctab[cat],
                             name=str(cat)
                         ))
-                    fig.update_layout(barmode='stack', title="クロス集計の積み上げ棒グラフ（縦）")
+                    fig.update_layout(barmode='stack', title="積み上げ縦棒グラフ")
                     plotly_fig = fig
                 except Exception as e:
-                    st.error(f"積み上げ棒グラフ作成エラー: {e}")
-            elif graph_type == "各カラムの円グラフ":
+                    st.error(f"積み上げ縦棒グラフ作成エラー: {e}")
+            elif graph_type == "円グラフ":
                 try:
                     plotly_fig1 = px.pie(df, names=group_categories(df[col1], max_categories=5), title=f"{col1} の分布")
                     plotly_fig2 = px.pie(df, names=group_categories(df[col2], max_categories=5), title=f"{col2} の分布")
@@ -744,7 +742,7 @@ def display_dashboard():
     bottom_container = st.container()
     
     with top_container:
-        st.subheader("地図表示")
+        st.subheader("マップ")
         if deck_chart is not None:
             st.pydeck_chart(deck_chart, use_container_width=True)
         else:
@@ -761,7 +759,7 @@ def display_dashboard():
             st.info("表示するグラフデータがありません。")
 
 def main():
-    st.title("データ表示ダッシュボードアプリ")
+    st.title("高解像度熱中症リスクダッシュボード by HITS")
     
     tab1, tab2 = st.tabs(["ファイル選択", "ダッシュボード表示"])
     
