@@ -487,33 +487,33 @@ def display_dashboard():
                     # サイズ
                     radius = st.sidebar.text_input(f"半径", value=30, key=f"radius_key_{file_name}")
                     # アイコンで表示かポイントで表示かを選択
-                    if st.sidebar.checkbox("アイコンで表示", value=False):
-                        # アイコンのアトラス（1枚の画像に複数のアイコンが含まれる画像）と、アイコンのマッピング情報を設定
-                        icon_atlas = "./resource/icon-atlas.png"
-                        icon_mapping = {
-                            "marker": {"x": 0, "y": 0, "width": 128, "height": 128, "mask": True},
-                        }
-                        icon_layer = pdk.Layer(
-                            "IconLayer",
-                            data=df_sample,
-                            get_icon="icon",
-                            get_position=[lon_col, lat_col],
-                            sizeScale=15,
-                            iconAtlas=icon_atlas,
-                            iconMapping=icon_mapping,
-                        )
-                        map_layers.append(icon_layer)
-                    else:
-                        csv_layer = pdk.Layer(
-                            "ScatterplotLayer",
-                            data=df_sample,
-                            get_position=[lon_col, lat_col],
-                            get_fill_color=get_color_expr,
-                            get_radius=radius,
-                            pickable=True,
-                            auto_highlight=True,
-                        )
-                        map_layers.append(csv_layer)
+                    # if st.sidebar.checkbox("アイコンで表示", value=False):
+                    #     # アイコンのアトラス（1枚の画像に複数のアイコンが含まれる画像）と、アイコンのマッピング情報を設定
+                    #     icon_atlas = "./resource/icon-atlas.png"
+                    #     icon_mapping = {
+                    #         "marker": {"x": 0, "y": 0, "width": 128, "height": 128, "mask": True},
+                    #     }
+                    #     icon_layer = pdk.Layer(
+                    #         "IconLayer",
+                    #         data=df_sample,
+                    #         get_icon="icon",
+                    #         get_position=[lon_col, lat_col],
+                    #         sizeScale=15,
+                    #         iconAtlas=icon_atlas,
+                    #         iconMapping=icon_mapping,
+                    #     )
+                    #     map_layers.append(icon_layer)
+                    # else:
+                    csv_layer = pdk.Layer(
+                        "ScatterplotLayer",
+                        data=df_sample,
+                        get_position=[lon_col, lat_col],
+                        get_fill_color=get_color_expr,
+                        get_radius=radius,
+                        pickable=True,
+                        auto_highlight=True,
+                    )
+                    map_layers.append(csv_layer)
                 else:
                     st.sidebar.warning(f"CSVファイル {file_name} に指定された緯度/経度カラムが見つかりません。")
             except Exception as e:
@@ -571,37 +571,37 @@ def display_dashboard():
                     all_lon.append(center_lon)
                     # ジオメトリの種類によって処理を分ける
                     if gdf_sample.geometry.geom_type.iloc[0] == "Point":
-                        if st.button("アイコンで表示", key=f"icon_button_{file_name}"):
-                            # アイコンのアトラス（1枚の画像に複数のアイコンが含まれる画像）と、アイコンのマッピング情報を設定
-                            icon_atlas = "./resource/icon-atlas.png"
-                            icon_mapping = {
-                                "marker": {"x": 0, "y": 0, "width": 128, "height": 128, "mask": True},
-                            }
+                    #     if st.button("アイコンで表示", key=f"icon_button_{file_name}"):
+                    #         # アイコンのアトラス（1枚の画像に複数のアイコンが含まれる画像）と、アイコンのマッピング情報を設定
+                    #         icon_atlas = "./resource/icon-atlas.png"
+                    #         icon_mapping = {
+                    #             "marker": {"x": 0, "y": 0, "width": 128, "height": 128, "mask": True},
+                    #         }
 
-                            icon_layer = pdk.Layer(
-                                "IconLayer",
-                                data=gdf_sample,
-                                get_icon="icon",
-                                get_position="geometry.coordinates",
-                                sizeScale=15,
-                                iconAtlas=icon_atlas,
-                                iconMapping=icon_mapping,
-                            )
-                            map_layers.append(icon_layer)
-                        elif st.button("ポイントで表示", key=f"point_button_{file_name}"):
-                            # CSVの場合にはポイントのサイズ
-                            radius = st.sidebar.text_input(f"半径", value=30, key=f"radius_key_{file_name}")
-                            # Pointの場合にはScatterplotLayer
-                            geojson_layer = pdk.Layer(
-                                "ScatterplotLayer",
-                                data=gdf_sample,
-                                get_position="geometry.coordinates",
-                                get_fill_color="properties.get_color",
-                                get_radius=radius,
-                                pickable=True,
-                                auto_highlight=True,
-                            )
-                            map_layers.append(geojson_layer)
+                    #         icon_layer = pdk.Layer(
+                    #             "IconLayer",
+                    #             data=gdf_sample,
+                    #             get_icon="icon",
+                    #             get_position="geometry.coordinates",
+                    #             sizeScale=15,
+                    #             iconAtlas=icon_atlas,
+                    #             iconMapping=icon_mapping,
+                    #         )
+                    #         map_layers.append(icon_layer)
+                    #     elif st.button("ポイントで表示", key=f"point_button_{file_name}"):
+                        # CSVの場合にはポイントのサイズ
+                        radius = st.sidebar.text_input(f"半径", value=30, key=f"radius_key_{file_name}")
+                        # Pointの場合にはScatterplotLayer
+                        geojson_layer = pdk.Layer(
+                            "ScatterplotLayer",
+                            data=gdf_sample,
+                            get_position="geometry.coordinates",
+                            get_fill_color="properties.get_color",
+                            get_radius=radius,
+                            pickable=True,
+                            auto_highlight=True,
+                        )
+                        map_layers.append(geojson_layer)
                     else:
                         geojson_layer = pdk.Layer(
                             "GeoJsonLayer",
