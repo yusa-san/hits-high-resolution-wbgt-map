@@ -748,8 +748,11 @@ def display_dashboard():
     
     with bottom_container:
         st.subheader("グラフ")
-        if plotly_fig is not None:
-            st.plotly_chart(plotly_fig, use_container_width=True)
+        if fig is not None:
+            st.plotly_chart(fig, use_container_width=True)
+        elif fig1 is not None and fig2 is not None:
+            st.plotly_chart(fig1, use_container_width=True)
+            st.plotly_chart(fig2, use_container_width=True)
         else:
             st.info("表示するグラフデータがありません。")
 
