@@ -22,7 +22,6 @@ from PIL import Image
 import pyarrow as pa
 
 st.set_page_config(layout="wide")
-st.image("header.png", use_container_width=False)
 
 def file_selection_screen():
     # 全体の再読み込みボタン
@@ -751,6 +750,7 @@ def display_dashboard():
             st.info("表示するグラフデータがありません。")
 
 def main():
+    st.image("header.png", use_container_width=False)
     st.title("高解像度熱中症リスクダッシュボード by HITS")
     
     tab1, tab2 = st.tabs(["ファイル選択", "ダッシュボード表示"])
