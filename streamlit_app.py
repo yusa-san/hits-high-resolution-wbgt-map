@@ -365,22 +365,19 @@ def file_selection_screen():
                     st.success(f"{file_name} の色分け用バンドを{band_default} に設定しました。")
 
     # 選択されたファイルの一覧
-    st.write("### 読み込み済みファイルの一覧:")
+    st.subheader("### 読み込み済みファイルの一覧:")
     # print(st.session_state)
     if "folder_entries" in st.session_state and st.session_state["folder_entries"]: # Inputフォルダからのファイル情報
-        st.write("#### Inputフォルダ:")
         for file_info in st.session_state["folder_entries"]:
-            st.write(f"{file_info.get('name', 'error:name')} ({file_info.get('source', 'error:source')})")
+            st.success(f"{file_info.get('name', 'error:name')} ({file_info.get('source', 'error:source')})")
             # st.write(f"file_info: {file_info}")
     if "url_entries" in st.session_state and st.session_state["url_entries"]: # URL入力によるファイル情報
-        st.write("#### URL入力:")
         for file_info in st.session_state["url_entries"]:
-            st.write(f"{file_info.get('name', 'error:name')} ({file_info.get('source', 'error:source')})")
+            st.success(f"{file_info.get('name', 'error:name')} ({file_info.get('source', 'error:source')})")
             # st.write(f"file_info: {file_info}")
     if "upload_entries" in st.session_state and st.session_state["upload_entries"]:  #アップロードによるファイル情報
-        st.write("#### アップロード:")
         for file_info in st.session_state["upload_entries"]:
-            st.write(f"{file_info.get('name', 'error:name')} ({file_info.get('source', 'error:source')})")
+            st.success(f"{file_info.get('name', 'error:name')} ({file_info.get('source', 'error:source')})")
             # st.write(f"file_info: {file_info}")
 
 def load_tiff_preview_as_array(file_path): # 単一バンドのみに対応
@@ -398,8 +395,6 @@ def numpy_array_to_data_uri(img_array):
     return f"data:image/png;base64,{encoded}"
 
 def display_dashboard():
-    st.header("高解像度熱中症リスクダッシュボード by HITS")
-    
     # すべてのエントリを統合
     all_entries = []
     if "folder_entries" in st.session_state:
