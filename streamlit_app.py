@@ -487,7 +487,7 @@ def display_dashboard():
                 if df is not None:
                     st.sidebar.write(df.describe())
                     # 大きなデータの場合はサンプルを抽出
-                    num = 100000
+                    num = 130000
                     if len(df) > num:
                         df_sample = df.sample(n=num, random_state=42)
                         st.sidebar.warning(f"{file_name}を{num}行にサンプル済み")
