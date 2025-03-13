@@ -1,2 +1,6 @@
 [server]
 maxMessageSize = 300
+
+[theme]
+backgroundColor = "#F1A7AC"
+font = "BIZ UDPGothic"
