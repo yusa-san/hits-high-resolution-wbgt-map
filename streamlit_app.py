@@ -685,7 +685,7 @@ def display_dashboard():
         df = file_info.get("preview")
         if df is None:
             st.error("選択されたファイルのプレビューがありません。")
-        else:
+        elif isinstance(df, pd.DataFrame) or isinstance(df, gpd.GeoDataFrame):
             # 2. 2つのカラムの選択（df.columns から）
             cols = df.columns.tolist()
             col1 = st.selectbox("1つ目のカラムを選択", options=cols, key="plot_col1")
@@ -734,6 +734,8 @@ def display_dashboard():
                     st.plotly_chart(fig2, use_container_width=True)
                 except Exception as e:
                     st.error(f"円グラフ作成エラー: {e}")
+        else:
+            st.error("選択されたファイルは適切な形式ではありません。")
 
     # --- 上下レイアウトで表示 ---
     top_container = st.container()
