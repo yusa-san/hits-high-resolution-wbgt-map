@@ -22,20 +22,7 @@ from PIL import Image
 import pyarrow as pa
 
 st.set_page_config(layout="wide")
-
-# カスタムCSSでサイドバーを下にずらす
-st.markdown(
-    """
-    <style>
-    [data-testid="stSidebar"] {
-        margin-top: 300px;
-    }
-    </style>
-    """,
-    unsafe_allow_html=True
-)
-
-st.image("header.png", use_container_width=False)
+st.image("header.png", use_container_width=True)
 
 def file_selection_screen():
     # 全体の再読み込みボタン
