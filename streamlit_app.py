@@ -404,35 +404,37 @@ def group_by_range(series, max_categories=8):
         group_range_labels = series.astype(str)
         return pd.Categorical(group_range_labels), group_range_labels
 
-    # 1D の数値データを 2D 配列に変換（k-means 用）
-    X = series.values.reshape(-1, 1)
+    # 欠損値のあるサンプルを除外
+    clean_series = series.dropna()
+    if clean_series.empty:
+        # clean_series が空の場合はそのまま返す
+        return pd.Categorical(clean_series.astype(str)), clean_series.astype(str)
+
+    # 1次元のデータを2次元に変換（KMeans の入力として必要）
+    X = clean_series.values.reshape(-1, 1)
+    
     # クラスタ数は、max_categories とユニーク値数の小さい方にする
-    unique_values = np.unique(series.values)
+    unique_values = np.unique(clean_series.values)
     n_clusters = min(max_categories, len(unique_values))
     
     # k-means クラスタリングの実行
     kmeans = KMeans(n_clusters=n_clusters, random_state=42)
     labels = kmeans.fit_predict(X)
     
-    # 各クラスタごとに最小値・最大値を算出し、範囲文字列を作成
+    # 各クラスタごとに最小値・最大値の範囲を計算し、文字列として保存
     cluster_ranges = {}
     for label in np.unique(labels):
-        cluster_values = series[labels == label]
+        cluster_values = clean_series[labels == label]
         cluster_min = cluster_values.min()
         cluster_max = cluster_values.max()
         cluster_ranges[label] = f"{cluster_min:.2f} ~ {cluster_max:.2f}"
     
-    # 元の系列の各要素に対して、対応する範囲文字列を生成
-    group_range_labels = pd.Series([cluster_ranges[label] for label in labels], index=series.index)
+    # 元の (dropna後の) series の各要素に対応するクラスタの範囲の文字列を生成
+    group_range_labels = pd.Series([cluster_ranges[label] for label in labels], index=clean_series.index)
     
-    # 表示用に、各クラスタのラベルをカテゴリー順に並べ替える
-    # ※クラスタの順序は、クラスタ中心値の昇順で決定
+    # クラスタ中心値の昇順で並べ替え
     cluster_centers = kmeans.cluster_centers_.flatten()
     sorted_order = np.argsort(cluster_centers)
-    # sorted_order_map[label] = 新しい順序に対応したラベル（例: 0,1,2,...）
-    sorted_order_map = {old_label: new_label for new_label, old_label in enumerate(sorted_order)}
-    # ここでは、各要素のクラスタを文字列（範囲）として扱うので、カテゴリの並び順は
-    # 各クラスタの最小値（または中心値）の昇順となるように指定する
     unique_range_labels = [cluster_ranges[label] for label in sorted_order]
     grouped_series = pd.Categorical(group_range_labels, categories=unique_range_labels, ordered=True)
     
