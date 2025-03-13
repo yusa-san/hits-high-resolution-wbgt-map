@@ -543,14 +543,16 @@ def display_dashboard():
                             key=f"cmap_{file_info.get('name')}"
                         )
                         cmap = plt.get_cmap(cmap_choice)
-                        unique_vals = gdf_sample[color_attr].unique()
+                        unique_vals = gdf_sample[color_attr].dropna().unique()  # nullは除外
                         if np.issubdtype(unique_vals.dtype, np.number):
-                            st.sidebar.write(f"ここまでok")
                             norm = mcolors.Normalize(vmin=unique_vals.min(), vmax=unique_vals.max())
                             # 各フィーチャーに対して、色を計算し、properties に "get_color" として保存
                             for feature in geojson_data["features"]:
                                 if color_attr in feature["properties"]:
                                     val = feature["properties"][color_attr]
+                                    if val is None:
+                                        feature["properties"]["get_color"] = [200, 30, 0, 160]
+                                        continue
                                     color = cmap(norm(val))  # RGBA (0～1)
                                     # 0～255 に変換し、alpha を固定(例: 160)
                                     feature["properties"]["get_color"] = [int(255 * color[i]) for i in range(3)] + [160]
