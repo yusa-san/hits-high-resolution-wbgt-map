@@ -365,7 +365,7 @@ def file_selection_screen():
                     st.success(f"{file_name} の色分け用バンドを{band_default} に設定しました。")
 
     # 選択されたファイルの一覧
-    st.subheader("### 読み込み済みファイルの一覧:")
+    st.success("読み込み済みファイルの一覧:")
     # print(st.session_state)
     if "folder_entries" in st.session_state and st.session_state["folder_entries"]: # Inputフォルダからのファイル情報
         for file_info in st.session_state["folder_entries"]:
@@ -737,14 +737,12 @@ def display_dashboard():
     bottom_container = st.container()
     
     with top_container:
-        st.subheader("マップ")
         if deck_chart is not None:
             st.pydeck_chart(deck_chart, use_container_width=True)
         else:
             st.info("表示する地図レイヤーがありません。")
     
     with bottom_container:
-        st.subheader("グラフ")
         if plotly_fig is not None:
             st.plotly_chart(plotly_fig, use_container_width=True)
         elif plotly_fig1 is not None and plotly_fig2 is not None:
