@@ -497,9 +497,8 @@ def display_dashboard():
                     all_lat.extend(df_sample[lat_col].dropna().tolist())
                     all_lon.extend(df_sample[lon_col].dropna().tolist())
                     # 属性カラムによる色分け
-                    columns_list = df_sample.columns.tolist()
-                    columns_list.extend([None])
-                    color_attr = st.sidebar.selectbox(f"色分けに用いるカラム", columns_list, format_func=lambda x: "None" if x is None else x)
+                    columns_list = df_sample.columns.tolist() + [None]
+                    color_attr = st.sidebar.selectbox(f"色分けに用いるカラム", columns_list, format_func=lambda x: "None" if x is None else x, index=len(columns_list)-1)
                     if color_attr and color_attr in df_sample.columns:
                         # プルダウンでカラーマップを選択
                         cmap_choice = st.sidebar.selectbox(
@@ -589,9 +588,8 @@ def display_dashboard():
                         gdf_sample = gdf
                     geojson_data = gdf_sample.__geo_interface__
                     # 属性カラムによる色分け
-                    columns_list = gdf_sample.columns.tolist()
-                    columns_list.extend([None])
-                    color_attr = st.sidebar.selectbox(f"色分けに用いるカラム", columns_list, format_func=lambda x: "None" if x is None else x)
+                    columns_list = gdf_sample.columns.tolist() + [None]
+                    color_attr = st.sidebar.selectbox(f"色分けに用いるカラム", columns_list, format_func=lambda x: "None" if x is None else x, index=len(columns_list)-1)
                     if color_attr and color_attr in gdf_sample.columns:
                         # プルダウンでカラーマップを選択
                         cmap_choice = st.sidebar.selectbox(
