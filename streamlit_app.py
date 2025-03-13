@@ -507,7 +507,8 @@ def display_dashboard():
                             key=f"cmap_{file_info.get('name')}"
                         )
                         cmap = plt.get_cmap(cmap_choice)
-                        unique_vals = df_sample[color_attr].unique().fillna(0)
+                        filled_vals = df_sample[color_attr].fillna(0)
+                        unique_vals = filled_vals.unique()
                         if np.issubdtype(unique_vals.dtype, np.number):
                             norm = mcolors.Normalize(vmin=unique_vals.min(), vmax=unique_vals.max())
                             df_sample["get_color"] = df_sample[color_attr].apply(
@@ -598,7 +599,8 @@ def display_dashboard():
                             key=f"cmap_{file_info.get('name')}"
                         )
                         cmap = plt.get_cmap(cmap_choice)
-                        unique_vals = gdf_sample[color_attr].unique().fillna(0)  # nullは除外
+                        filled_vals = df_sample[color_attr].fillna(0)
+                        unique_vals = filled_vals.unique()
                         if np.issubdtype(unique_vals.dtype, np.number):
                             norm = mcolors.Normalize(vmin=unique_vals.min(), vmax=unique_vals.max())
                             # 各フィーチャーに対して、色を計算し、properties に "get_color" として保存
