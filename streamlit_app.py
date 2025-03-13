@@ -428,11 +428,11 @@ def display_dashboard():
             continue
         file_name = fname
         ext = os.path.splitext(file_name)[1].lower()
+        st.sidebar.write(f"選択されたファイル{file_name}")
         # CSVの場合：プレビューは file_info["preview"]（サンプリング済みであることを想定）
         if ext == ".csv":
             try:
                 df = file_info.get("preview", None)
-                # st.sidebar.write(f"file_name: {file_info.get('name', None)}")
                 lat_col = file_info.get("lat_col", "lat")
                 lon_col = file_info.get("lon_col", "lon")
                 # st.sidebar.write(f"lat_col: {lat_col} lon_col: {lon_col}")
@@ -450,7 +450,7 @@ def display_dashboard():
                     # 属性カラムによる色分け
                     columns_list = df_sample.columns.tolist()
                     columns_list.extend([None])
-                    color_attr = st.sidebar.selectbox(f"Inputフォルダ内のファイル{file_name}", columns_list, format_func=lambda x: "None" if x is None else x)
+                    color_attr = st.sidebar.selectbox(f"色分けに用いるカラム", columns_list, format_func=lambda x: "None" if x is None else x)
                     if color_attr and color_attr in df_sample.columns:
                         # プルダウンでカラーマップを選択
                         cmap_choice = st.sidebar.selectbox(
@@ -525,7 +525,7 @@ def display_dashboard():
                     # 属性カラムによる色分け
                     columns_list = gdf_sample.columns.tolist()
                     columns_list.extend([None])
-                    color_attr = st.sidebar.selectbox(f"Inputフォルダ内のファイル{file_name}", columns_list, format_func=lambda x: "None" if x is None else x)
+                    color_attr = st.sidebar.selectbox(f"色分けに用いるカラム", columns_list, format_func=lambda x: "None" if x is None else x)
                     if color_attr and color_attr in gdf_sample.columns:
                         # プルダウンでカラーマップを選択
                         cmap_choice = st.sidebar.selectbox(
