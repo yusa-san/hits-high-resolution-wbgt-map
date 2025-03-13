@@ -2,9 +2,7 @@
 maxMessageSize = 300
 
 [theme]
-primaryColor = "fae8ea"
-backgroundColor = "#ffffff"
+backgroundColor = "#fae8ea"
 font = "BIZ UDPGothic"
-secondaryBackgroundColor = "#F1A7AC"
 textColor = "#333333"
-sidebar = { "backgroundColor": "#F1A7AC", "contrast": 1.2 }
+sidebar = { "backgroundColor": "#F1A7AC"}
