@@ -599,7 +599,7 @@ def display_dashboard():
                             key=f"cmap_{file_info.get('name')}"
                         )
                         cmap = plt.get_cmap(cmap_choice)
-                        filled_vals = df_sample[color_attr].fillna(0)
+                        filled_vals = gdf_sample[color_attr].fillna(0)
                         unique_vals = filled_vals.unique()
                         if np.issubdtype(unique_vals.dtype, np.number):
                             norm = mcolors.Normalize(vmin=unique_vals.min(), vmax=unique_vals.max())
