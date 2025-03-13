@@ -677,65 +677,65 @@ def display_dashboard():
     plotly_fig1 = None
     plotly_fig2 = None
     st.sidebar.header("グラフの設定")
-    # if len(all_entries) == 0:
-    #     st.sidebar.error("表示するファイルがありません。")
-    # else:
-    #     # 1. 対象ファイルの選択
-    #     file_options = [fi["name"] for fi in all_entries if "name" in fi]
-    #     file_choice = st.sidebar.selectbox("ファイルを選択", options=file_options)
-    #     # 選択された file_info を取得
-    #     file_info = next(fi for fi in all_entries if fi.get("name") == file_choice)
-    #     df = file_info.get("preview", None)
-    #     if df is None:
-    #         st.error("選択されたファイルのプレビューがありません。")
-    #     elif isinstance(df, pd.DataFrame) or isinstance(df, gpd.GeoDataFrame):
-    #         # 2. 2つのカラムの選択（df.columns から）
-    #         cols = df.columns.tolist()
-    #         col1 = st.sidebar.selectbox("1つ目のカラムを選択", options=cols, key="plot_col1")
-    #         col2 = st.sidebar.selectbox("2つ目のカラムを選択", options=cols, key="plot_col2")
-    #         
-    #         # 3. グラフの種類の選択
-    #         graph_type = st.sidebar.selectbox("グラフの種類を選択", options=["散布図", "積み上げ縦棒グラフ", "円グラフ"])
-    #         
-    #         # 4. カテゴリ数が多い場合のグループ化処理
-    #         def group_categories(series, max_categories=5):
-    #             counts = series.value_counts()
-    #             if len(counts) > max_categories:
-    #                 top_categories = counts.index[:max_categories]
-    #                 return series.apply(lambda x: x if x in top_categories else "Other")
-    #             return series
-    #         
-    #         # 5. グラフ作成
-    #         if graph_type == "散布図":
-    #             try:
-    #                 df_numeric = df[[col1, col2]].apply(pd.to_numeric, errors="coerce")
-    #                 plotly_fig = px.scatter(df_numeric, x=col1, y=col2, title="散布図")
-    #             except Exception as e:
-    #                 st.error(f"散布図作成エラー: {e}")
-    #         elif graph_type == "積み上げ縦棒グラフ":
-    #             try:
-    #                 series1 = group_categories(df[col1], max_categories=5)
-    #                 series2 = group_categories(df[col2], max_categories=5)
-    #                 ctab = pd.crosstab(series1, series2)
-    #                 fig = go.Figure()
-    #                 for cat in ctab.columns:
-    #                     fig.add_trace(go.Bar(
-    #                         x=ctab.index,
-    #                         y=ctab[cat],
-    #                         name=str(cat)
-    #                     ))
-    #                 fig.update_layout(barmode='stack', title="積み上げ縦棒グラフ")
-    #                 plotly_fig = fig
-    # #             except Exception as e:
-    #                 st.error(f"積み上げ縦棒グラフ作成エラー: {e}")
-    #         elif graph_type == "円グラフ":
-    #             try:
-    #                 plotly_fig1 = px.pie(df, names=group_categories(df[col1], max_categories=5), title=f"{col1} の分布")
-    #                 plotly_fig2 = px.pie(df, names=group_categories(df[col2], max_categories=5), title=f"{col2} の分布")
-    #             except Exception as e:
-    #                 st.error(f"円グラフ作成エラー: {e}")
-    #     else:
-    #         st.error("選択されたファイルは適切な形式ではありません。")
+    if len(all_entries) == 0:
+        st.sidebar.error("表示するファイルがありません。")
+    else:
+        # 1. 対象ファイルの選択
+        file_options = [fi["name"] for fi in all_entries if "name" in fi]
+        file_choice = st.sidebar.selectbox("ファイルを選択", options=file_options)
+        # 選択された file_info を取得
+        file_info = next(fi for fi in all_entries if fi.get("name") == file_choice)
+        df = file_info.get("preview", None)
+        if df is None:
+            st.error("選択されたファイルのプレビューがありません。")
+        elif isinstance(df, pd.DataFrame) or isinstance(df, gpd.GeoDataFrame):
+            # 2. 2つのカラムの選択（df.columns から）
+            cols = df.columns.tolist()
+            col1 = st.sidebar.selectbox("1つ目のカラムを選択", options=cols, key="plot_col1")
+            col2 = st.sidebar.selectbox("2つ目のカラムを選択", options=cols, key="plot_col2")
+            
+            # 3. グラフの種類の選択
+            graph_type = st.sidebar.selectbox("グラフの種類を選択", options=["散布図", "積み上げ縦棒グラフ", "円グラフ"])
+            
+            # 4. カテゴリ数が多い場合のグループ化処理
+            def group_categories(series, max_categories=5):
+                counts = series.value_counts()
+                if len(counts) > max_categories:
+                    top_categories = counts.index[:max_categories]
+                    return series.apply(lambda x: x if x in top_categories else "Other")
+                return series
+            
+            # 5. グラフ作成
+            if graph_type == "散布図":
+                try:
+                    df_numeric = df[[col1, col2]].apply(pd.to_numeric, errors="coerce")
+                    plotly_fig = px.scatter(df_numeric, x=col1, y=col2, title="散布図")
+                except Exception as e:
+                    st.error(f"散布図作成エラー: {e}")
+            elif graph_type == "積み上げ縦棒グラフ":
+                try:
+                    series1 = group_categories(df[col1], max_categories=5)
+                    series2 = group_categories(df[col2], max_categories=5)
+                    ctab = pd.crosstab(series1, series2)
+                    fig = go.Figure()
+                    for cat in ctab.columns:
+                        fig.add_trace(go.Bar(
+                            x=ctab.index,
+                            y=ctab[cat],
+                            name=str(cat)
+                        ))
+                    fig.update_layout(barmode='stack', title="積み上げ縦棒グラフ")
+                    plotly_fig = fig
+                except Exception as e:
+                    st.error(f"積み上げ縦棒グラフ作成エラー: {e}")
+            elif graph_type == "円グラフ":
+                try:
+                    plotly_fig1 = px.pie(df, names=group_categories(df[col1], max_categories=5), title=f"{col1} の分布")
+                    plotly_fig2 = px.pie(df, names=group_categories(df[col2], max_categories=5), title=f"{col2} の分布")
+                except Exception as e:
+                    st.error(f"円グラフ作成エラー: {e}")
+        else:
+            st.error("選択されたファイルは適切な形式ではありません。")
 
     # --- 上下レイアウトで表示 ---
     top_container = st.container()
