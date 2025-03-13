@@ -412,8 +412,8 @@ def display_dashboard():
         all_entries.extend(st.session_state["upload_entries"])
 
     st.sidebar.header("条件設定")
-    st.sidebar.write("all_entries:")
-    st.sidebar.write(all_entries)
+    # st.sidebar.write("all_entries:")
+    # st.sidebar.write(all_entries)
 
     # レイヤーパネル
     st.sidebar.header("レイヤーパネル")
