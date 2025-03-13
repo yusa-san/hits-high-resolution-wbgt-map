@@ -22,7 +22,7 @@ from PIL import Image
 import pyarrow as pa
 
 st.set_page_config(layout="wide")
-st.image("header.png", use_container_width=True)
+# st.image("header.png", use_container_width=True)
 
 def file_selection_screen():
     # 全体の再読み込みボタン
