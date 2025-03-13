@@ -20,6 +20,7 @@ import base64
 from io import BytesIO
 from PIL import Image
 import pyarrow as pa
+from sklearn.cluster import KMeans
 
 st.set_page_config(layout="wide")
 st.image("header.png", use_container_width=True)
@@ -397,6 +398,46 @@ def numpy_array_to_data_uri(img_array):
     encoded = base64.b64encode(buffer.getvalue()).decode("utf-8")
     return f"data:image/png;base64,{encoded}"
 
+def group_by_range(series, max_categories=8):
+    # 数値データでない場合は、各値をそのまま返す
+    if not pd.api.types.is_numeric_dtype(series):
+        group_range_labels = series.astype(str)
+        return pd.Categorical(group_range_labels), group_range_labels
+
+    # 1D の数値データを 2D 配列に変換（k-means 用）
+    X = series.values.reshape(-1, 1)
+    # クラスタ数は、max_categories とユニーク値数の小さい方にする
+    unique_values = np.unique(series.values)
+    n_clusters = min(max_categories, len(unique_values))
+    
+    # k-means クラスタリングの実行
+    kmeans = KMeans(n_clusters=n_clusters, random_state=42)
+    labels = kmeans.fit_predict(X)
+    
+    # 各クラスタごとに最小値・最大値を算出し、範囲文字列を作成
+    cluster_ranges = {}
+    for label in np.unique(labels):
+        cluster_values = series[labels == label]
+        cluster_min = cluster_values.min()
+        cluster_max = cluster_values.max()
+        cluster_ranges[label] = f"{cluster_min:.2f} ~ {cluster_max:.2f}"
+    
+    # 元の系列の各要素に対して、対応する範囲文字列を生成
+    group_range_labels = pd.Series([cluster_ranges[label] for label in labels], index=series.index)
+    
+    # 表示用に、各クラスタのラベルをカテゴリー順に並べ替える
+    # ※クラスタの順序は、クラスタ中心値の昇順で決定
+    cluster_centers = kmeans.cluster_centers_.flatten()
+    sorted_order = np.argsort(cluster_centers)
+    # sorted_order_map[label] = 新しい順序に対応したラベル（例: 0,1,2,...）
+    sorted_order_map = {old_label: new_label for new_label, old_label in enumerate(sorted_order)}
+    # ここでは、各要素のクラスタを文字列（範囲）として扱うので、カテゴリの並び順は
+    # 各クラスタの最小値（または中心値）の昇順となるように指定する
+    unique_range_labels = [cluster_ranges[label] for label in sorted_order]
+    grouped_series = pd.Categorical(group_range_labels, categories=unique_range_labels, ordered=True)
+    
+    return grouped_series, group_range_labels
+
 def display_dashboard():
     # すべてのエントリを統合
     all_entries = []
@@ -695,30 +736,6 @@ def display_dashboard():
             cols = df.columns.tolist() + [None]
             col1 = st.sidebar.selectbox("1つ目のカラムを選択", options=cols, key="plot_col1")
             col2 = st.sidebar.selectbox("2つ目のカラムを選択(オプション)", options=cols, key="plot_col2")
-            # カテゴリ数が多い場合のグループ化処理
-            def group_by_range(series, max_categories=5):
-                # 数値データでない場合は、各値を個別のカテゴリとして扱う
-                if not pd.api.types.is_numeric_dtype(series):
-                    grouped_series = series
-                    group_range_labels = series.astype(str)
-                else:
-                    # 数値データの場合
-                    min_val = series.min()
-                    max_val = series.max()
-                    std_val = series.std()              
-                    # 全ての値が同一の場合は固定のカテゴリを返す
-                    if std_val == 0:
-                        grouped_series = pd.Series(["Equal"] * len(series), index=series.index)
-                        group_range_labels = grouped_series.astype(str)
-                    else:
-                        # 標準偏差を目安にビン数を決定し、最大グループ数で制限
-                        num_bins = max(1, int(np.ceil((max_val - min_val) / std_val)))
-                        num_bins = min(num_bins, max_categories)                    
-                        # 等間隔のビン境界を生成し、pd.cut によりグルーピング
-                        bins = np.linspace(min_val, max_val, num_bins + 1)
-                        grouped_series = pd.cut(series, bins=bins, include_lowest=True)
-                        group_range_labels = grouped_series.astype(str)
-                return grouped_series, group_range_labels
             # グラフ作成
             if graph_type == "散布図":
                 try:
