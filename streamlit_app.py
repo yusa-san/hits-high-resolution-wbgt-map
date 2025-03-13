@@ -523,37 +523,53 @@ def display_dashboard():
                             )
                         get_color_expr = "get_color"
                     else:
-                        get_color_expr = [200,30,0,160]
+                        color_choice = st.sidebar.selectbox(
+                            "カラーを選択",
+                            ["Red", "Green", "Blue", "Purple", "Yellow", "Orange", "Black", "White"],
+                            key=f"color_{file_info.get('name')}"
+                        )
+                        # 選択肢に対応するRGBAの値（最後の値は透明度）
+                        color_dict = {
+                            "Red": [255, 0, 0, 160],
+                            "Green": [0, 255, 0, 160],
+                            "Blue": [0, 0, 255, 160],
+                            "Purple": [128, 0, 128, 160],
+                            "Yellow": [255, 255, 0, 160],
+                            "Orange": [255, 165, 0, 160],
+                            "Black": [0, 0, 0, 160],
+                            "White": [255, 255, 255, 160]
+                        }
+                        get_color_expr = color_dict.get(color_choice, [200, 30, 0, 160])
                     # サイズ
                     radius = st.sidebar.text_input(f"半径", value=10, key=f"radius_key_{file_name}")
                     # アイコン表示かポイント表示かを選択
-                    # if st.sidebar.checkbox("アイコンで表示", value=False):
-                    #     # アイコンのアトラス（1枚の画像に複数のアイコンが含まれる画像）と、アイコンのマッピング情報を設定
-                    #     icon_atlas = "./resource/icon-atlas.png"
-                    #     icon_mapping = {
-                    #         "marker": {"x": 0, "y": 0, "width": 128, "height": 128, "mask": True},
-                    #     }
-                    #     icon_layer = pdk.Layer(
-                    #         "IconLayer",
-                    #         data=df_sample,
-                    #         get_icon="icon",
-                    #         get_position=[lon_col, lat_col],
-                    #         sizeScale=15,
-                    #         iconAtlas=icon_atlas,
-                    #         iconMapping=icon_mapping,
-                    #     )
-                    #     map_layers.append(icon_layer)
-                    # else:
-                    csv_layer = pdk.Layer(
-                        "ScatterplotLayer",
-                        data=df_sample,
-                        get_position=[lon_col, lat_col],
-                        get_fill_color=get_color_expr,
-                        get_radius=radius,
-                        pickable=True,
-                        auto_highlight=True,
-                    )
-                    map_layers.append(csv_layer)
+                    if st.sidebar.checkbox("アイコンで表示", value=False):
+                        # アイコンのアトラス（1枚の画像に複数のアイコンが含まれる画像）と、アイコンのマッピング情報を設定
+                        icon_atlas = "./icon-atlas.png"
+                        icon_mapping = {
+                            "marker": {"x": 0, "y": 0, "width": 128, "height": 128, "mask": True},
+                        }
+                        icon_layer = pdk.Layer(
+                            "IconLayer",
+                            data=df_sample,
+                            get_icon="icon",
+                            get_position=[lon_col, lat_col],
+                            sizeScale=15,
+                            iconAtlas=icon_atlas,
+                            iconMapping=icon_mapping,
+                        )
+                        map_layers.append(icon_layer)
+                    else:
+                        csv_layer = pdk.Layer(
+                            "ScatterplotLayer",
+                            data=df_sample,
+                            get_position=[lon_col, lat_col],
+                            get_fill_color=get_color_expr,
+                            get_radius=radius,
+                            pickable=True,
+                            auto_highlight=True,
+                        )
+                        map_layers.append(csv_layer)
                 else:
                     st.sidebar.warning(f"CSVファイル {file_name} に指定された緯度/経度カラムが見つかりません。")
             except Exception as e:
@@ -597,13 +613,27 @@ def display_dashboard():
                                     color = cmap(norm(val))  # RGBA (0～1)
                                     # 0～255 に変換し、alpha を固定(例: 160)
                                     feature["properties"]["get_color"] = [int(255 * color[i]) for i in range(3)] + [160]
-                                else:
-                                    # color_attr がなければデフォルト色を設定
-                                    feature["properties"]["get_color"] = [200, 30, 0, 160]
-                        else:
-                            # 数値型でない場合は全てにデフォルト色を設定
-                            for feature in geojson_data["features"]:
-                                feature["properties"]["get_color"] = [200, 30, 0, 160]
+                    else:
+                        # color_attrがなければ全てにデフォルト色を設定
+                        color_choice = st.sidebar.selectbox(
+                            "カラーを選択",
+                            ["Red", "Green", "Blue", "Purple", "Yellow", "Orange", "Black", "White"],
+                            key=f"color_{file_info.get('name')}"
+                        )
+                        # 選択肢に対応するRGBAの値（最後の値は透明度）
+                        color_dict = {
+                            "Red": [255, 0, 0, 160],
+                            "Green": [0, 255, 0, 160],
+                            "Blue": [0, 0, 255, 160],
+                            "Purple": [128, 0, 128, 160],
+                            "Yellow": [255, 255, 0, 160],
+                            "Orange": [255, 165, 0, 160],
+                            "Black": [0, 0, 0, 160],
+                            "White": [255, 255, 255, 160]
+                        }
+                        get_color_expr = color_dict.get(color_choice, [200, 30, 0, 160])
+                        for feature in geojson_data["features"]:
+                            feature["properties"]["get_color"] = get_color_expr
                     # 座標の中心は gdf の全体境界から計算
                     bounds = gdf_sample.total_bounds  # [minx, miny, maxx, maxy]
                     center_lat = (bounds[1] + bounds[3]) / 2
@@ -612,37 +642,36 @@ def display_dashboard():
                     all_lon.append(center_lon)
                     # ジオメトリの種類によって処理を分ける
                     if gdf_sample.geometry.geom_type.iloc[0] == "Point":
-                    #     if st.button("アイコンで表示", key=f"icon_button_{file_name}"):
-                    #         # アイコンのアトラス（1枚の画像に複数のアイコンが含まれる画像）と、アイコンのマッピング情報を設定
-                    #         icon_atlas = "./resource/icon-atlas.png"
-                    #         icon_mapping = {
-                    #             "marker": {"x": 0, "y": 0, "width": 128, "height": 128, "mask": True},
-                    #         }
-
-                    #         icon_layer = pdk.Layer(
-                    #             "IconLayer",
-                    #             data=gdf_sample,
-                    #             get_icon="icon",
-                    #             get_position="geometry.coordinates",
-                    #             sizeScale=15,
-                    #             iconAtlas=icon_atlas,
-                    #             iconMapping=icon_mapping,
-                    #         )
-                    #         map_layers.append(icon_layer)
-                    #     elif st.button("ポイントで表示", key=f"point_button_{file_name}"):
-                        # CSVの場合にはポイントのサイズ
-                        radius = st.sidebar.text_input(f"半径", value=30, key=f"radius_key_{file_name}")
-                        # Pointの場合にはScatterplotLayer
-                        geojson_layer = pdk.Layer(
-                            "ScatterplotLayer",
-                            data=gdf_sample,
-                            get_position="geometry.coordinates",
-                            get_fill_color="properties.get_color",
-                            get_radius=radius,
-                            pickable=True,
-                            auto_highlight=True,
-                        )
-                        map_layers.append(geojson_layer)
+                        if st.button("アイコンで表示", key=f"icon_button_{file_name}"):
+                            # アイコンのアトラス（1枚の画像に複数のアイコンが含まれる画像）と、アイコンのマッピング情報を設定
+                            icon_atlas = "./icon-atlas.png"
+                            icon_mapping = {
+                                "marker": {"x": 0, "y": 0, "width": 128, "height": 128, "mask": True},
+                                }
+                            icon_layer = pdk.Layer(
+                                "IconLayer",
+                                data=gdf_sample,
+                                get_icon="icon",
+                                get_position="geometry.coordinates",
+                                sizeScale=15,
+                                iconAtlas=icon_atlas,
+                                iconMapping=icon_mapping,
+                            )
+                            map_layers.append(icon_layer)
+                        elif st.button("ポイントで表示", key=f"point_button_{file_name}"):
+                            # CSVの場合にはポイントのサイズ
+                            radius = st.sidebar.text_input(f"半径", value=30, key=f"radius_key_{file_name}")
+                            # Pointの場合にはScatterplotLayer
+                            geojson_layer = pdk.Layer(
+                                "ScatterplotLayer",
+                                data=gdf_sample,
+                                get_position="geometry.coordinates",
+                                get_fill_color="properties.get_color",
+                                get_radius=radius,
+                                pickable=True,
+                                auto_highlight=True,
+                            )
+                            map_layers.append(geojson_layer)
                     else:
                         geojson_layer = pdk.Layer(
                             "GeoJsonLayer",
