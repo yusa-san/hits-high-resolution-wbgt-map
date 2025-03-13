@@ -686,6 +686,8 @@ def display_dashboard():
         if df is None:
             st.error("選択されたファイルのプレビューがありません。")
         elif isinstance(df, pd.DataFrame) or isinstance(df, gpd.GeoDataFrame):
+            # Plotly 用グラフ用変数を初期化
+            plotly_fig = None
             # 2. 2つのカラムの選択（df.columns から）
             cols = df.columns.tolist()
             col1 = st.selectbox("1つ目のカラムを選択", options=cols, key="plot_col1")
@@ -706,8 +708,7 @@ def display_dashboard():
             if graph_type == "散布図":
                 try:
                     df_numeric = df[[col1, col2]].apply(pd.to_numeric, errors="coerce")
-                    fig = px.scatter(df_numeric, x=col1, y=col2, title="散布図")
-                    st.plotly_chart(fig, use_container_width=True)
+                    plotly_fig = px.scatter(df_numeric, x=col1, y=col2, title="散布図")
                 except Exception as e:
                     st.error(f"散布図作成エラー: {e}")
             elif graph_type == "クロス集計の積み上げ棒グラフ（縦）":
@@ -723,15 +724,13 @@ def display_dashboard():
                             name=str(cat)
                         ))
                     fig.update_layout(barmode='stack', title="クロス集計の積み上げ棒グラフ（縦）")
-                    st.plotly_chart(fig, use_container_width=True)
+                    plotly_fig = fig
                 except Exception as e:
                     st.error(f"積み上げ棒グラフ作成エラー: {e}")
             elif graph_type == "各カラムの円グラフ":
                 try:
-                    fig1 = px.pie(df, names=group_categories(df[col1], max_categories=5), title=f"{col1} の分布")
-                    fig2 = px.pie(df, names=group_categories(df[col2], max_categories=5), title=f"{col2} の分布")
-                    st.plotly_chart(fig1, use_container_width=True)
-                    st.plotly_chart(fig2, use_container_width=True)
+                    plotly_fig1 = px.pie(df, names=group_categories(df[col1], max_categories=5), title=f"{col1} の分布")
+                    plotly_fig2 = px.pie(df, names=group_categories(df[col2], max_categories=5), title=f"{col2} の分布")
                 except Exception as e:
                     st.error(f"円グラフ作成エラー: {e}")
         else:
@@ -750,11 +749,11 @@ def display_dashboard():
     
     with bottom_container:
         st.subheader("グラフ")
-        if fig is not None:
-            st.plotly_chart(fig, use_container_width=True)
-        elif fig1 is not None and fig2 is not None:
-            st.plotly_chart(fig1, use_container_width=True)
-            st.plotly_chart(fig2, use_container_width=True)
+        if plotly_fig is not None:
+            st.plotly_chart(plotly_fig, use_container_width=True)
+        elif plotly_fig1 is not None and plotly_fig2 is not None:
+            st.plotly_chart(plotly_fig1, use_container_width=True)
+            st.plotly_chart(plotly_fig2, use_container_width=True)
         else:
             st.info("表示するグラフデータがありません。")
 
