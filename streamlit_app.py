@@ -618,6 +618,8 @@ def display_dashboard():
     
     for file_info in all_entries:
         file_name = file_info.get("name", "")
+        if file_name == "":
+            continue
         ext = os.path.splitext(file_name)[1].lower()
         if ext == ".csv":
             layers, lats, lons = process_csv_file(file_info, layer_visibility)
