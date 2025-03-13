@@ -543,7 +543,7 @@ def display_dashboard():
                     # サイズ
                     radius = st.sidebar.text_input(f"半径", value=10, key=f"radius_key_{file_name}")
                     # アイコン表示かポイント表示かを選択
-                    if st.sidebar.checkbox("アイコンで表示", value=False):
+                    if st.sidebar.checkbox("アイコンで表示", value=False, key=f"icon_button_{file_name}"):
                         # アイコンのアトラス（1枚の画像に複数のアイコンが含まれる画像）と、アイコンのマッピング情報を設定
                         icon_atlas = "./icon-atlas.png"
                         icon_mapping = {
